@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.12-management
+    ports:
+      - "5672:5672"
+
+  db:
+    container_name: db
+    image: postgres:14-alpine
+    env_file:
+      - ./.env
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${SQL_DB} -U ${POSTGRES_USER}"]
+      interval: 3s
+      timeout: 1s
+      retries: 5
+  
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend/:/usr/src/app/
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./.env
+    restart: on-failure
+    depends_on:
+      - db
+      - rabbitmq
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/usr/src/app
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env
+    restart: on-failure
+    depends_on:
+      - db
+      - backend
+      - rabbitmq
