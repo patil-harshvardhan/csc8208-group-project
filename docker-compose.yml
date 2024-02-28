@@ -40,7 +40,7 @@ services:
   frontend:
     container_name: frontend
     build:
-      context: ./frontend
+      context: ./frontend/chat-client
       dockerfile: Dockerfile
     volumes:
       - ./frontend:/usr/src/app
