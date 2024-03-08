@@ -3,3 +3,4 @@ python-jose
 passlib[bcrypt]
 uvicorn[standard]
 redis
+python-multipart
