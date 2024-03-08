@@ -74,6 +74,7 @@ def authenticate_user(fake_db, username: str, password: str):
         return False
     return user
 
+#some code
 
 def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
     to_encode = data.copy()
