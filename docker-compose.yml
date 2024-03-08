@@ -1,11 +1,11 @@
 version: "3.8"
 
 services:
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3.12-management
+  redis:
+    container_name: redis  
+    image: redis:latest  
     ports:
-      - "5672:5672"
+      - "6379:6379" 
 
   db:
     container_name: db
@@ -35,7 +35,7 @@ services:
     restart: on-failure
     depends_on:
       - db
-      - rabbitmq
+      - redis
 
   frontend:
     container_name: frontend
@@ -52,4 +52,4 @@ services:
     depends_on:
       - db
       - backend
-      - rabbitmq
+      - redis
