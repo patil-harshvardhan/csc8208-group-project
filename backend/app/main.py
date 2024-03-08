@@ -8,8 +8,8 @@ import redis
 
 app = FastAPI()
 
-key = Fernet.generate_key()
-fernet = Fernet(key)
+# key = Fernet.generate_key()
+# fernet = Fernet(key)
 
 class Message(BaseModel):
     sender: str
@@ -63,16 +63,15 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
 async def startup_event():
     global offline_messages
     # offline_messages = await aioredis.create_redis_pool("redis://localhost")
-    offline_messages = redis.Redis(host="localhost", decode_responses=True)
+    offline_messages = redis.Redis(host="redis", decode_responses=True)
 
 @app.on_event("shutdown")
 async def shutdown_event():
     pass
 
-items = {}
-@app.get("/items/{item_id}")
+@app.get("/items")
 async def read_items(item_id: str):
-    return items[item_id]
+    return "Hello there"
     # offline_messages.close()
     # await offline_messages.wait_closed()
 
