@@ -4,3 +4,7 @@ passlib[bcrypt]
 uvicorn[standard]
 redis
 python-multipart
+asyncpg
+pydantic_settings
+psycopg2-binary
+sqlalchemy
