@@ -34,6 +34,16 @@ services:
     #   - postgres_data:/var/lib/postgresql/data
     restart: always
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: group@group.com
+      PGADMIN_DEFAULT_PASSWORD: group
+
   
   backend:
     container_name: backend
