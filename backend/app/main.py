@@ -15,6 +15,14 @@ SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+from app.models import User
+import app.schemas as schemas
+import os 
+from app.db.database import SessionLocal, engine, Base
+from sqlalchemy.orm import Session
+import app.models as models
+import app.schemas as schemas
+
 
 fake_users_db = {
     "johndoe": {
@@ -47,7 +55,12 @@ class UserInDB(User):
     hashed_password: str
 
 
-
+def get_session():
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -114,6 +127,7 @@ async def startup_event():
     global offline_messages
     # offline_messages = await aioredis.create_redis_pool("redis://localhost")
     offline_messages = redis.Redis(host="redis", decode_responses=True)
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -206,3 +220,21 @@ async def read_own_items(
     current_user: Annotated[User, Depends(get_current_active_user)]
 ):
     return [{"item_id": "Foo", "owner": current_user.username}]
+
+
+# register api 
+@app.post("/register")
+def register_user(user: schemas.UserCreate, session: Session = Depends(get_session)):
+    existing_user = session.query(models.User).filter_by(email=user.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    encrypted_password = get_password_hash(user.password) #TODO encrypt the password
+
+    new_user = models.User(username=user.username, email=user.email, password=encrypted_password )
+
+    session.add(new_user)
+    session.commit()
+    session.refresh(new_user)
+
+    return {"message":"user created successfully"}
