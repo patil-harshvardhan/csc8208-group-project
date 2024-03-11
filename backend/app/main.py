@@ -9,6 +9,21 @@ import json
 import base64
 # from cryptography.fernet import Fernet
 import redis
+
+
+# for the database and registration
+from models import User
+from database import Base, engine, SessionLocal
+
+
+Base.metadata.create_all(engine)
+def get_session():
+    session = SessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
 # to get a string like this run:
 # openssl rand -hex 32
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -204,3 +219,19 @@ async def read_own_items(
     current_user: Annotated[User, Depends(get_current_active_user)]
 ):
     return [{"item_id": "Foo", "owner": current_user.username}]
+
+@app.post("/register")
+def register_user(user: schemas.UserCreate, session: Session = Depends(get_session)):
+    existing_user = session.query(models.User).filter_by(email=user.email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    encrypted_password =get_hashed_password(user.password)
+
+    new_user = models.User(username=user.username, email=user.email, password=encrypted_password )
+
+    session.add(new_user)
+    session.commit()
+    session.refresh(new_user)
+
+    return {"message":"user created successfully"}
