@@ -76,9 +76,12 @@ def verify_password(plain_password, hashed_password):
 
 
 class Message(BaseModel):
+    typee: str
     sender: str
     recipient: str
     message: str
+    sessionId: str
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
@@ -94,7 +97,8 @@ class ConnectionManager:
 
     async def send(self, message: Message, r_websocket : WebSocket):
         # encrypted_message = fernet.encrypt(message.message.encode())
-        await r_websocket.send_text(json.dumps({"sender": message.sender, "message": message.message}))
+        await r_websocket.send_text(json.dumps(message.dict()))
+        # await r_websocket.send_text(json.dumps({"sender": message.sender, "message": message.message}))
         # await r_websocket.send_text(json.dumps({"sender": message.sender, "message": base64.b64encode(encrypted_message).decode()}))
 
     def disconnect(self, user_id: str):
