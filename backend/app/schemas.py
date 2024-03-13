@@ -24,3 +24,14 @@ class TokenCreate(BaseModel):
     refresh_token:str
     status:bool
     created_date:datetime.datetime
+
+class MsgCreate(BaseModel):
+    sender_id : str
+    receiver_id : str
+    msg_content : str
+    msg_timestamp :datetime.datetime
+    session_id : str
+
+
+class MsgRetrive(BaseModel):
+    receiver_id : str
