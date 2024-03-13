@@ -19,4 +19,4 @@ EXPOSE 5500
 RUN pip3 install --no-cache-dir --upgrade -r requirements.txt
 
 # Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080","--reload"]
