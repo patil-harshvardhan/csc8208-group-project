@@ -2,11 +2,23 @@
 import Image from "next/image";
 import { Input } from "postcss";
 import { useEffect, useState } from "react";
+import axios from "./axios";
 
 export default function Home() {
  
 
   const [email,setEmail] = useState("");
+  const [password,setPassword] = useState("");
+
+
+  const login =  async ()=>{
+    const res = await axios.post("/login",{
+      email:email,
+      password:password
+    })
+    console.log(res)
+  }
+
   useEffect(()=>{
     console.log(email)
   },[email])
@@ -53,7 +65,7 @@ export default function Home() {
       <p class="text-red-500 text-xs italic">Please choose a password.</p>
     </div>
     <div class="flex items-center justify-between">
-      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button">
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" onClick={login}>
         Sign In
       </button>
       <a class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800" href="#">
