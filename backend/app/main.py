@@ -1,9 +1,5 @@
-from datetime import datetime, timedelta, timezone
-from typing import Annotated, Union, Dict, List
 from fastapi import Depends, FastAPI, HTTPException, status, FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError, jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel
 import json
 import base64
@@ -15,7 +11,7 @@ SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-from app.models import User
+from app.models import User, TokenTable
 import app.schemas as schemas
 import os 
 from app.db.database import SessionLocal, engine, Base
@@ -23,36 +19,12 @@ from sqlalchemy.orm import Session
 import app.models as models
 import app.schemas as schemas
 
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-        "disabled": False,
-    }
-}
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class TokenData(BaseModel):
-    username: Union[str, None] = None
-
-
-class User(BaseModel):
-    username: str
-    email: Union[str, None] = None
-    full_name: Union[str, None] = None
-    disabled: Union[bool, None] = None
-
-
-class UserInDB(User):
-    hashed_password: str
+from passlib.context import CryptContext
+from datetime import datetime, timedelta
+from typing import Union, Any, Dict
+from jose import jwt
+from app.auth_bearer import JWTBearer
+import pytz
 
 
 def get_session():
@@ -62,17 +34,10 @@ def get_session():
     finally:
         session.close()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
 
-# key = Fernet.generate_key()
-# fernet = Fernet(key)
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
 
 
 class Message(BaseModel):
@@ -133,94 +98,46 @@ async def startup_event():
 async def shutdown_event():
     pass
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+# Code for authentication
 
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 30 minutes
+REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days
+ALGORITHM = "HS256"
+JWT_SECRET_KEY = "narscbjim@$@&^@&%^&RFghgjvbdsha"   # should be kept secret
+JWT_REFRESH_SECRET_KEY = "13ugfdfgh@#$%^@&jkl45678902"
 
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-    return user
+password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_hashed_password(password: str) -> str:
+    return password_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Union[timedelta, None] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+def verify_password(password: str, hashed_pass: str) -> bool:
+    return password_context.verify(password, hashed_pass)
+
+def create_access_token(subject: Union[str, Any], expires_delta: int = None) -> str:
+    if expires_delta is not None:
+        expires_delta = datetime.utcnow() + expires_delta
+        
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        expires_delta = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+         
+    
+    to_encode = {"exp": expires_delta, "sub": str(subject)}
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, ALGORITHM)
+     
     return encoded_jwt
 
-
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-    user = get_user(fake_users_db, username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
-
-
-async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)]
-):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-
-@app.post("/token")
-async def login_for_access_token(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
-) -> Token:
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return Token(access_token=access_token, token_type="bearer")
-
-
-@app.get("/users/me/", response_model=User)
-async def read_users_me(
-    current_user: Annotated[User, Depends(get_current_active_user)]
-):
-    return current_user
-
-
-@app.get("/users/me/items/")
-async def read_own_items(
-    current_user: Annotated[User, Depends(get_current_active_user)]
-):
-    return [{"item_id": "Foo", "owner": current_user.username}]
-
+def create_refresh_token(subject: Union[str, Any], expires_delta: int = None) -> str:
+    if expires_delta is not None:
+        expires_delta = datetime.utcnow() + expires_delta
+    else:
+        expires_delta = datetime.utcnow() + timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode = {"exp": expires_delta, "sub": str(subject)}
+    encoded_jwt = jwt.encode(to_encode, JWT_REFRESH_SECRET_KEY, ALGORITHM)
+    return encoded_jwt
 
 # register api 
 @app.post("/register")
@@ -229,7 +146,7 @@ def register_user(user: schemas.UserCreate, session: Session = Depends(get_sessi
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    encrypted_password = get_password_hash(user.password) #TODO encrypt the password
+    encrypted_password = get_hashed_password(user.password) #TODO encrypt the password
 
     new_user = models.User(username=user.username, email=user.email, password=encrypted_password )
 
@@ -238,3 +155,86 @@ def register_user(user: schemas.UserCreate, session: Session = Depends(get_sessi
     session.refresh(new_user)
 
     return {"message":"user created successfully"}
+
+@app.post('/change-password')
+def change_password(request: schemas.changepassword, db: Session = Depends(get_session)):
+    user = db.query(models.User).filter(models.User.email == request.email).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User not found")
+    
+    if not verify_password(request.old_password, user.password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid old password")
+    
+    encrypted_password = get_hashed_password(request.new_password)
+    user.password = encrypted_password
+    db.commit()
+    
+    return {"message": "Password changed successfully"}
+
+@app.post('/login' ,response_model=schemas.TokenSchema)
+def login(request: schemas.requestdetails, db: Session = Depends(get_session)):
+    user = db.query(User).filter(User.email == request.email).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect email")
+    hashed_pass = user.password
+    if not verify_password(request.password, hashed_pass):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Incorrect password"
+        )
+    
+    access=create_access_token(user.id)
+    refresh = create_refresh_token(user.id)
+
+    token_db = models.TokenTable(user_id=user.id,  access_token=access,  refresh_token=refresh, status=True)
+    db.add(token_db)
+    db.commit()
+    db.refresh(token_db)
+    return {
+        "access_token": access,
+        "refresh_token": refresh,
+    }
+
+@app.get('/getusers')
+def getusers( dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
+    user = session.query(models.User).all()
+    return user
+
+@app.post('/logout')
+def logout(dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
+    token=dependencies
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user_id = payload['sub']
+    token_record = db.query(models.TokenTable).all()
+    info=[]
+    for record in token_record:
+        print("record",record)
+        record_created_date_utc = record.created_date.replace(tzinfo=pytz.utc)
+        if (datetime.now(pytz.utc) - record_created_date_utc).days > 1:
+            info.append(record.user_id)
+    if info:
+        existing_token = db.query(models.TokenTable).where(TokenTable.user_id.in_(info)).delete()
+        db.commit()
+        
+    existing_token = db.query(models.TokenTable).filter(models.TokenTable.user_id == user_id, models.TokenTable.access_token==token).first()
+    if existing_token:
+        existing_token.status=False
+        db.add(existing_token)
+        db.commit()
+        db.refresh(existing_token)
+    return {"message":"Logout Successfully"} 
+
+def token_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+    
+        payload = jwt.decode(kwargs['dependencies'], JWT_SECRET_KEY, ALGORITHM)
+        user_id = payload['sub']
+        data= kwargs['session'].query(models.TokenTable).filter_by(user_id=user_id,access_token=kwargs['dependencies'],status=True).first()
+        if data:
+            return func(kwargs['dependencies'],kwargs['session'])
+        
+        else:
+            return {'msg': "Token blocked"}
+        
+    return wrapper
