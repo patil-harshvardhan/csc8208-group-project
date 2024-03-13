@@ -110,6 +110,8 @@ class ConnectionManager:
         if message.recipient in self.active_connections:
             websocket = self.active_connections[message.recipient]
             await self.send(message, websocket)
+            # store in DB
+            
         else:
             offline_messages.lpush(message.recipient, json.dumps(message.dict())) # remove await here, redis originally is sync
             
@@ -279,3 +281,14 @@ def token_required(func):
             return {'msg': "Token blocked"}
         
     return wrapper
+
+
+
+@app.get('/get_active_users')
+def get_active_users( dependencies = Depends(JWTBearer())):
+    return list(manager.active_connections.keys())
+
+@app.get('/getconversations')
+def getconversations(dependencies = Depends(JWTBearer())):
+    user = session.query(models.User).all()
+    return user
