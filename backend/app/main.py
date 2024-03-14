@@ -26,6 +26,8 @@ from jose import jwt
 from app.auth_bearer import JWTBearer
 import pytz
 
+from starlette.middleware.cors import CORSMiddleware
+
 
 def get_session():
     session = SessionLocal()
@@ -36,7 +38,46 @@ def get_session():
 
 
 
-app = FastAPI()
+def get_application() -> FastAPI:
+    application = FastAPI(
+        title="Durhack2023",
+    )
+
+    origins = [
+        "http://localhost:3000",
+        "https://localhost:3001",
+    ]
+    # application.add_middleware(HTTPSRedirectMiddleware)
+    # ADDED ALLOWED HEADERS AS IN TUTORIAL
+    allowed_headers = [
+        "date",
+        "transfer-encoding",
+        "accept",
+        "accept-encoding",
+        "host",
+        "origin",
+        "referer",
+        "user-agent",
+        "content-encoding",
+        "content-length",
+        "content-type",
+        "cookie",
+    ]
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_methods=["*"],
+        allow_headers=allowed_headers,
+        allow_credentials=True,
+    )
+
+    # application.include_router(
+    #     fixtures.router,
+    #     prefix="/fixtures",
+    #     tags=["fixtures"],
+    # )
+    return application
+app = get_application()
 
 
 
