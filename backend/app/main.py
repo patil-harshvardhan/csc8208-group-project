@@ -46,6 +46,7 @@ def get_application() -> FastAPI:
     origins = [
         "http://localhost:3000",
         "https://localhost:3001",
+        "https://localhost:3002",
     ]
     # application.add_middleware(HTTPSRedirectMiddleware)
     # ADDED ALLOWED HEADERS AS IN TUTORIAL
