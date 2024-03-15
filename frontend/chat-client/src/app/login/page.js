@@ -3,17 +3,16 @@ import { useState } from "react";
 import axios from "../axios";
 import { useRouter } from "next/navigation";
 
-
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
   const login = async () => {
-    const res  = await axios.post("/login", { email, password });
-    if(res.status === 200){
-      console.log("Login Success")
-      router.push("/")
+    const res = await axios.post("/login", { email, password });
+    if (res.status === 200) {
+      console.log("Login Success");
+      router.push("/");
     }
   };
 
@@ -21,10 +20,13 @@ export default function Login() {
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="w-full max-w-xs">
         <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+          <div className="flex items-center justify-center space-x-2 mb-6">
+            <h1 className="text-xl font-semibold">Login</h1>
+          </div>
           <div className="mb-4">
             <label
               className="block text-gray-700 text-sm font-bold mb-2"
-              for="username"
+              htmlFor="username"
             >
               Username
             </label>
@@ -40,7 +42,7 @@ export default function Login() {
           <div className="mb-6">
             <label
               className="block text-gray-700 text-sm font-bold mb-2"
-              for="password"
+              htmlFor="password"
             >
               Password
             </label>
@@ -66,10 +68,22 @@ export default function Login() {
             </button>
             <a
               className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800"
-              href="#"
+              href="/change-password"
             >
               Change Password?
             </a>
+          </div>
+
+          <div>
+            <p>
+              Don't have an account?
+              <a
+                className="font-bold text-md text-blue-500 hover:text-blue-800"
+                href="/register"
+              >
+                Register
+              </a>
+            </p>
           </div>
         </form>
         <p className="text-center text-gray-500 text-xs">
