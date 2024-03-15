@@ -1,16 +1,19 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from app.db.database import Base
 import datetime
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # id = Column(String, primary_key=True)
     username = Column(String, unique=True)
     email = Column(String, unique=True)
     password = Column(String)
 
 class TokenTable(Base):
     __tablename__ = "token"
-    user_id = Column(Integer)
+    user_id = Column(String, primary_key=True)
     access_token = Column(String(450), primary_key=True)
     refresh_token = Column(String(450),nullable=False)
     status = Column(Boolean)
