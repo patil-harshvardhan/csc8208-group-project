@@ -1,64 +1,49 @@
 "use client";
-import Image from "next/image";
-import { Input } from "postcss";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import axios from "../axios";
 
-import { useRouter } from "next/navigation";
-
-export default function register() {
-  const [username, setUsername] = useState("");
+export default function page() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [currentPassword, setcurrentPassword] = useState("");
+  const [changePassword, setChangePassword] = useState("");
   const [confirmPassword, setconfirmPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const register = async () => {
+  const changedPassword = async () => {
     // Perform form validation
-    if (!username || !email || !password) {
+    if (!email || !currentPassword || !confirmPassword || !changePassword) {
       setError("All fields are required");
       return;
     }
 
-    if (password !== confirmPassword) {
+    if (changePassword !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
-    const res = await axios.post("/register", {
-      username,
-      email,
-      password,
-    });
-
+    const res = await axios.post("/change-password", { email, old_password:currentPassword, new_password:changePassword });
+console.log(res)
     if (res.status === 200) {
-      console.log("User registered successfully", res);
+      console.log("Password Changed Successfully");
       router.push("/login");
     }
+   if(res.status === 400){
+      setError(res.data.detail)
+      console.log(res.data.detail)
+      return;
+    }
+
   };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      
       <div className="w-full max-w-xs">
+      
         <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <div className="flex items-center justify-center space-x-2 mb-6"><h1 className="text-xl font-semibold">Register New User</h1></div>
-          <div className="mb-4">
-            <label
-              className="block text-gray-700 text-sm font-bold mb-2"
-              htmlFor="username"
-            >
-              Username
-            </label>
-            <input
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="username"
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            ></input>
-          </div>
+          <div className="flex items-center justify-center space-x-2 mb-6"><h1 className="text-xl font-semibold">Change Password</h1></div>
           <div className="mb-4">
             <label
               className="block text-gray-700 text-sm font-bold mb-2"
@@ -75,20 +60,37 @@ export default function register() {
               onChange={(e) => setEmail(e.target.value)}
             ></input>
           </div>
+          <div className="mb-4">
+            <label
+              className="block text-gray-700 text-sm font-bold mb-2"
+              htmlFor="currentPassword"
+            >
+              Current Password
+            </label>
+            <input
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              id="currentPassword"
+              type="password"
+              placeholder="Current Password"
+              value={currentPassword}
+              onChange={(e) => setcurrentPassword(e.target.value)}
+            ></input>
+          </div>
+
           <div className="mb-6">
             <label
               className="block text-gray-700 text-sm font-bold mb-2"
-              htmlFor="password"
+              htmlFor="changePassword"
             >
               Password
             </label>
             <input
               className="shadow appearance-none border border-red-500 rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
-              id="password"
+              id="changePassword"
               type="password"
               placeholder="******************"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={changePassword}
+              onChange={(e) => setChangePassword(e.target.value)}
             ></input>
             {/* <p className="text-red-500 text-xs italic">
               Please choose a password.
@@ -109,27 +111,21 @@ export default function register() {
               value={confirmPassword}
               onChange={(e) => setconfirmPassword(e.target.value)}
             ></input>
-            <p className="text-red-500 text-xs italic">Confirm password.</p>
+            {/* <p className="text-red-500 text-xs italic">Confirm password.</p> */}
           </div>
           {error && (
             <div>
-              <p className="text-red-500 text-m italic">{error}</p>
+              <p className="text-red-500 text-m font-bold">{error}</p>
             </div>
           )}
           <div className="flex items-center justify-between">
             <button
               className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="button"
-              onClick={register}
+              onClick={changedPassword}
             >
-              Register
+              Change Password
             </button>
-            <a
-              className="inline-block align-baseline font-bold text-md text-blue-500 hover:text-blue-800"
-              href="/login"
-            >
-              Login?
-            </a>
           </div>
         </form>
         <p className="text-center text-gray-500 text-xs">
