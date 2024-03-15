@@ -84,9 +84,12 @@ app = get_application()
 
 
 class Message(BaseModel):
+    typee: str 
     sender: str
     recipient: str
     message: str
+    sessionId: str
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, WebSocket] = {}
@@ -121,8 +124,8 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str,dependencies=Depends(JWTBearer()),  session: Session = Depends(get_session)):
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket, dependencies=Depends(JWTBearer()),  session: Session = Depends(get_session)):
     token = dependencies
     print("token: ", token)
     payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
@@ -257,6 +260,15 @@ def login(request: schemas.requestdetails, db: Session = Depends(get_session)):
 def getusers( dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
     user = session.query(models.User).all()
     return user
+
+@app.get('/getuserdetails')
+def getusers(dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
+    token=dependencies
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user_id = payload['sub']
+    user = session.query(models.User).filter(models.User.id == user_id).first()
+    print("user",user)
+    return {"id": user.id, "username": user.username, "email": user.email}
 
 @app.post('/logout')
 def logout(dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
