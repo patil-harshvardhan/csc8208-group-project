@@ -1,7 +1,7 @@
 from jose.jwt import JWTError
 from jose import jwt
 from fastapi import FastAPI, Depends, HTTPException,status
-from fastapi import Request, HTTPException
+from fastapi import Request, HTTPException, WebSocket
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.models import TokenTable
 
@@ -24,8 +24,13 @@ class JWTBearer(HTTPBearer):
     def __init__(self, auto_error: bool = True):
         super(JWTBearer, self).__init__(auto_error=auto_error)
 
-    async def __call__(self, request: Request):
-        credentials: HTTPAuthorizationCredentials = await super(JWTBearer, self).__call__(request)
+    async def __call__(self, request: Request = None, websocket: WebSocket = None):
+        if request:
+            credentials: HTTPAuthorizationCredentials = await super(JWTBearer, self).__call__(request)
+        elif websocket:
+            credentials: HTTPAuthorizationCredentials = await super(JWTBearer, self).__call__(websocket)
+        else:
+            raise HTTPException(status_code=403, detail="Invalid request.")
         if credentials:
             if not credentials.scheme == "Bearer":
                 raise HTTPException(status_code=403, detail="Invalid authentication scheme.")

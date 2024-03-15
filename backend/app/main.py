@@ -2,6 +2,7 @@ from fastapi import Depends, FastAPI, HTTPException, status, FastAPI, WebSocket,
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 import json
+
 import base64
 # from cryptography.fernet import Fernet
 import redis
@@ -25,7 +26,7 @@ from typing import Union, Any, Dict
 from jose import jwt
 from app.auth_bearer import JWTBearer
 import pytz
-
+from sqlalchemy import Column, Integer, String, select
 from starlette.middleware.cors import CORSMiddleware
 
 
@@ -96,7 +97,8 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket, user_id: str):
         await websocket.accept()
         self.active_connections[user_id] = websocket
-        
+        print("active_connections",self.active_connections)
+
         while offline_messages.llen(user_id) > 0: # remove the await, redis is sync originally
             message_data = offline_messages.lpop(user_id) # same sync problem
             message = Message(**json.loads(message_data))
@@ -123,7 +125,11 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 @app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str):
+async def websocket_endpoint(websocket: WebSocket, user_id: str, dependencies=Depends(JWTBearer())):
+    token = dependencies
+    print("token: ", token)
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user_id = payload['sub']
     print("user_id: ", user_id)
     await manager.connect(websocket, user_id)
     try:
@@ -289,8 +295,30 @@ def token_required(func):
 
 
 @app.get('/get_active_users')
-def get_active_users( dependencies = Depends(JWTBearer())):
-    return list(manager.active_connections.keys())
+async def get_active_users(
+    dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)
+):
+    user_ids = list(manager.active_connections.keys())
+    print("user_ids??",user_ids)
+    # users = db.query(User).options(exclude_properties=[User.password]).filter(User.id.in_(userids)).all()
+    users = db.execute(
+        select(
+            User.id,
+            User.username,
+            User.email
+        ).where(User.id.in_(user_ids))
+    ).fetchall()
+    print("users!!",users)
+    users_json = [
+        {
+            "id": str(user[0]),
+            "username": user[1],
+            "email": user[2]
+        }
+        for user in users
+    ]
+    print("users_json",users_json)
+    return users_json
 
 @app.get('/getconversations')
 def getconversations(dependencies = Depends(JWTBearer())):
