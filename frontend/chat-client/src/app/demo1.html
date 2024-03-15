@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fancy Messaging App</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    /* You can add custom styles here */
+    .message-bubble {
+      background-color: #F4F4F4;
+      border-radius: 12px;
+      padding: 10px 15px;
+      max-width: 70%;
+      margin-bottom: 10px;
+    }
+    .message-sender {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .message-time {
+      font-size: 0.8rem;
+      color: #777777;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <!-- Sidebar -->
+  <div class="bg-gray-200 h-screen w-1/4 p-4">
+    <h1 class="text-lg font-bold mb-4">People</h1>
+    <ul>
+      <li class="flex items-center py-2 hover:bg-gray-300 cursor-pointer">
+        <img src="https://via.placeholder.com/40" alt="User" class="w-8 h-8 rounded-full mr-2">
+        <span class="font-semibold">John Doe</span>
+      </li>
+      <li class="flex items-center py-2 hover:bg-gray-300 cursor-pointer">
+        <img src="https://via.placeholder.com/40" alt="User" class="w-8 h-8 rounded-full mr-2">
+        <span class="font-semibold">Jane Smith</span>
+      </li>
+      <!-- Add more people as needed -->
+    </ul>
+  </div>
+
+  <!-- Main Area -->
+  <div class="w-3/4 p-4 flex flex-col items-end">
+    <h1 class="text-lg font-bold mb-4">Conversations</h1>
+    <div class="bg-white rounded-lg shadow-md p-4 w-full">
+      <!-- Conversation messages will be displayed here -->
+      <div class="message-bubble">
+        <div class="message-sender">John Doe</div>
+        <p>Hi there!</p>
+        <div class="message-time">12:30 PM</div>
+      </div>
+      <div class="message-bubble">
+        <div class="message-sender">Jane Smith</div>
+        <p>Hello!</p>
+        <div class="message-time">12:32 PM</div>
+      </div>
+      <!-- Add more messages as needed -->
+    </div>
+
+    <!-- Input Box and Send Button -->
+    <div class="mt-4 flex items-center justify-between w-full">
+      <input type="text" placeholder="Type a message..." class="border border-gray-300 rounded-lg px-4 py-2 w-3/4 focus:outline-none focus:border-blue-500">
+      <button class="bg-blue-500 text-white px-4 py-2 rounded-lg ml-4">Send</button>
+    </div>
+  </div>
+
+</body>
+</html>

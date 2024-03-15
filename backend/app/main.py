@@ -40,7 +40,7 @@ def get_session():
 
 def get_application() -> FastAPI:
     application = FastAPI(
-        title="Durhack2023",
+        title="Team 6",
     )
 
     origins = [
@@ -63,10 +63,13 @@ def get_application() -> FastAPI:
         "content-length",
         "content-type",
         "cookie",
+        "authorization",
+        "bearer",
     ]
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        # allow_origins=origins,
+        allow_origins= ["*"],
         allow_methods=["*"],
         allow_headers=allowed_headers,
         allow_credentials=True,

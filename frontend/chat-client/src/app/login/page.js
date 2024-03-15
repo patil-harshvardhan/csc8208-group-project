@@ -3,17 +3,18 @@ import { useState } from "react";
 import axios from "../axios";
 import { useRouter } from "next/navigation";
 
-
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
   const login = async () => {
-    const res  = await axios.post("/login", { email, password });
-    if(res.status === 200){
-      console.log("Login Success")
-      router.push("/")
+    const res = await axios.post("/login", { email, password });
+    if (res.status === 200) {
+      const { access_token } = res.data;
+      document.cookie = `jwt=${access_token}; path=/`;
+      console.log("Login Success");
+      router.push("/chat");
     }
   };
 
