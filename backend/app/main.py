@@ -134,7 +134,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str,dependencies=Dep
             data = await websocket.receive_text()
             message = Message(**json.loads(data))
             await manager.send_personal_message(message)
-            new_msg = models.Conversation(typee = "msg",sender_id = user_id, receiver_id = user_id ,sender_name= message.sender,receiver_name=message.recipient,
+            new_msg = models.Conversation(typee = "msg",sender_id = message.sender, receiver_id = message.recipient ,
+                                          sender_name=get_username_by_id(message.sender,session),receiver_name=get_username_by_id(message.recipient,session),
                                            msg_content= message.message, session_id='0000')
 
             session.add(new_msg)
@@ -333,3 +334,11 @@ def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), 
     if not chat_history:
         raise HTTPException(status_code=404, detail="Chat history not found")
     return chat_history
+
+
+
+def get_username_by_id(user_id: int,db: Session):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user.username
