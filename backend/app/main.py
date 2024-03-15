@@ -122,7 +122,7 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 @app.websocket("/ws/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: str, dependencies=Depends(JWTBearer())):
+async def websocket_endpoint(websocket: WebSocket, user_id: str,dependencies=Depends(JWTBearer()),  session: Session = Depends(get_session)):
     token = dependencies
     print("token: ", token)
     payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
@@ -134,6 +134,14 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, dependencies=De
             data = await websocket.receive_text()
             message = Message(**json.loads(data))
             await manager.send_personal_message(message)
+            new_msg = models.Conversation(typee = "msg",sender_id = message.sender, receiver_id = message.recipient ,
+                                          sender_name=get_username_by_id(message.sender,session),receiver_name=get_username_by_id(message.recipient,session),
+                                           msg_content= message.message, session_id='0000')
+
+            session.add(new_msg)
+            session.commit()
+            session.refresh(new_msg) 
+
     except WebSocketDisconnect:
         manager.disconnect(user_id)
 
@@ -317,7 +325,20 @@ async def get_active_users(
     print("users_json",users_json)
     return users_json
 
-@app.get('/getconversations')
-def getconversations(dependencies = Depends(JWTBearer())):
-    user = session.query(models.User).all()
-    return user
+@app.get("/chat_history/{user1}/{user2}")
+def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
+    chat_history = db.query(models.Conversation).filter(
+        ((models.Conversation.sender_name == user1) & (models.Conversation.receiver_name == user2)) |
+        ((models.Conversation.sender_name == user2) & (models.Conversation.receiver_name == user1))
+    ).all()
+    if not chat_history:
+        raise HTTPException(status_code=404, detail="Chat history not found")
+    return chat_history
+
+
+
+def get_username_by_id(user_id: int,db: Session):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user.username

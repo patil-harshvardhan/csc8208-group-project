@@ -19,8 +19,8 @@ class TokenTable(Base):
     status = Column(Boolean)
     created_date = Column(DateTime, default=datetime.datetime.now)
 
-class ConversationTable(Base):
-    __tablename__ = "conversation"
+class Conversation(Base):
+    __tablename__ = "conversations"
     typee = Column(String)
     conv_id = Column(Integer, primary_key=True)
     sender_name = Column(String)
@@ -29,4 +29,5 @@ class ConversationTable(Base):
     receiver_id = Column(Integer)
     msg_content =  Column(String)
     msg_timestamp = Column(DateTime, default=datetime.datetime.now)
-    session_id = Column(Integer)     
+    session_id = Column(Integer) 
+   

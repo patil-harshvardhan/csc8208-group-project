@@ -65,7 +65,7 @@ services:
     container_name: frontend
     build:
       context: ./frontend/chat-client
-      dockerfile: Dockerfile
+      dockerfile: DockerFile
     volumes:
       - ./frontend:/usr/src/app
     ports:

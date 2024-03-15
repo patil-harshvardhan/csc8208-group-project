@@ -29,7 +29,6 @@ class MsgCreate(BaseModel):
     sender_id : str
     receiver_id : str
     msg_content : str
-    msg_timestamp :datetime.datetime
     session_id : str
 
 
