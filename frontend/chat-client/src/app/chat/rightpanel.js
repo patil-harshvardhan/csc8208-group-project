@@ -3,32 +3,37 @@ import MessageComponent from "./message";
 
 const RightPanel = ({ ws, selectedUser, userDetails }) => {
   const [msg, setMsg] = useState("");
+
+  const [userMsgs, setUserMsgs] = useState([]);
+
   const sendMessage = () => {
     ws.send(JSON.stringify({
-      message: "Hello",
+      message: msg,
       recipient: selectedUser.id,
       sender: userDetails.id,
       sessionId: "testId",
       typee: "publicKey",
     }));
     setMsg("");
+    setUserMsgs([...userMsgs, {sender:true, message:msg}]);
   };
 
   ws.onmessage = (event) => {
     console.log(event.data);
+    const data = JSON.parse(event.data);
+    if (selectedUser.id === data.sender) {
+        setUserMsgs([...userMsgs, {sender:false, message:data.message}]);
+    }
+    
   }
+
   return (
     <div className="w-3/4 p-4 flex flex-col items-end">
       <h1 className="text-lg font-bold mb-4">Conversations</h1>
       <div className="bg-white rounded-lg shadow-md p-4 w-full h-full">
-        <MessageComponent
-          message="It seems like you are from Mac OS world. There is no /Users/ folder on linux ?"
-          sender={false}
-        />
-        <MessageComponent
-          message="yes, I have a mac. I never had issues with root permission as well, but this helped me to solve the problem"
-          sender={true}
-        />
+        {userMsgs.map((msg) => (
+            <MessageComponent message={msg.message} sender={msg.sender} />
+            ))}
       </div>
       {/* here */}
       <div class="mt-4 flex items-center justify-between w-full">
