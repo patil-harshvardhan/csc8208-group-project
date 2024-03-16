@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Messaging App</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      /* You can add custom styles here */
+    </style>
+  </head>
+  <body class="bg-gray-100">
+    <!-- Sidebar -->
+    <div class="w-full h-32">
+      <div class="container mx-auto">
+        <div class="py-6 h-screen">
+          <div class="flex border border-grey rounded shadow-lg h-full">
+            <!-- left -->
+            <div class="bg-gray-200 h-screen w-1/4 p-4">
+              <h1 class="text-lg font-bold mb-4">People</h1>
+              <ul>
+                <li
+                  class="flex items-center py-2 hover:bg-gray-300 cursor-pointer"
+                >
+                  <img
+                    src="https://via.placeholder.com/40"
+                    alt="User"
+                    class="w-8 h-8 rounded-full mr-2"
+                  />
+                  <span class="font-semibold">John Doe</span>
+                </li>
+                <li
+                  class="flex items-center py-2 hover:bg-gray-300 cursor-pointer"
+                >
+                  <img
+                    src="https://via.placeholder.com/40"
+                    alt="User"
+                    class="w-8 h-8 rounded-full mr-2"
+                  />
+                  <span class="font-semibold">Jane Smith</span>
+                </li>
+                <!-- Add more people as needed -->
+              </ul>
+            </div>
+
+            <!-- Main Area -->
+            <div class="w-3/4 p-4 flex flex-col items-end">
+              <h1 class="text-lg font-bold mb-4">Conversations</h1>
+              <div class="bg-white rounded-lg shadow-md p-4 w-full">
+                <!-- Conversation messages will be displayed here -->
+                <div class="flex items-center mb-2">
+                  <span class="font-semibold">John Doe</span>
+                  <img
+                    src="https://via.placeholder.com/40"
+                    alt="User"
+                    class="w-8 h-8 rounded-full ml-2"
+                  />
+                </div>
+                <p class="bg-gray-100 p-2 rounded-lg text-right">Hi there!</p>
+                <div class="flex items-center mt-2">
+                  <span class="font-semibold">Jane Smith</span>
+                  <img
+                    src="https://via.placeholder.com/40"
+                    alt="User"
+                    class="w-8 h-8 rounded-full ml-2"
+                  />
+                </div>
+                <p class="bg-gray-100 p-2 rounded-lg text-right">Hello!</p>
+                <!-- Add more messages as needed -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

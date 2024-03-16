@@ -11,8 +11,10 @@ export default function Login() {
   const login = async () => {
     const res = await axios.post("/login", { email, password });
     if (res.status === 200) {
+      const { access_token } = res.data;
+      document.cookie = `jwt=${access_token}; path=/`;
       console.log("Login Success");
-      router.push("/");
+      router.push("/chat");
     }
   };
 
