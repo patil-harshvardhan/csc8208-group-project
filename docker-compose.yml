@@ -67,15 +67,15 @@ services:
       - backend
       - redis
 
-  # pgadmin:
-  #   image: dpage/pgadmin4
-  #   container_name: pgadmin4_container
-  #   restart: always
-  #   ports:
-  #     - "8888:80"
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: group@group.com
-  #     PGADMIN_DEFAULT_PASSWORD: group
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: group@group.com
+      PGADMIN_DEFAULT_PASSWORD: group
 
   # nginx:
   #   image: nginx

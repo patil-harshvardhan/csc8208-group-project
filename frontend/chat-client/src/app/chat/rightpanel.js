@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MessageComponent from "./message";
+import axiosInstance from "../axios";
 
 const RightPanel = ({ ws, selectedUser, userDetails }) => {
   const [msg, setMsg] = useState("");
-
   const [userMsgs, setUserMsgs] = useState([]);
 
   const sendMessage = () => {
@@ -24,8 +24,28 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
     if (selectedUser.id === data.sender) {
         setUserMsgs([...userMsgs, {sender:false, message:data.message}]);
     }
-    
   }
+
+  const getChatHistory = async () => {
+    const res = await axiosInstance.get(`/chat_history/${selectedUser.id}/${userDetails.id}`);
+    if (res.status === 200) {
+        console.log(res.data);
+        const msgs = res.data.map((msg) => {
+            return {
+                message: msg.msg_content,
+                sender: msg.sender_id === userDetails.id ? true : false,
+            }
+        })
+        setUserMsgs(msgs)
+    }
+    }
+    useEffect(() => {
+        setUserMsgs([]);
+        setMsg("");
+        if (selectedUser) {
+            getChatHistory();
+        }
+    }, [selectedUser]);
 
   return (
     <div className="w-3/4 p-4 flex flex-col items-end">

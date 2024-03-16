@@ -366,8 +366,8 @@ async def get_active_users(
 @app.get("/chat_history/{user1}/{user2}")
 def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
     chat_history = db.query(models.Conversation).filter(
-        ((models.Conversation.sender_name == user1) & (models.Conversation.receiver_name == user2)) |
-        ((models.Conversation.sender_name == user2) & (models.Conversation.receiver_name == user1))
+        ((models.Conversation.sender_id == user1) & (models.Conversation.receiver_id == user2)) |
+        ((models.Conversation.sender_id == user2) & (models.Conversation.receiver_id == user1))
     ).all()
     if not chat_history:
         raise HTTPException(status_code=404, detail="Chat history not found")
