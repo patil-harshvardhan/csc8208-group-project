@@ -45,9 +45,10 @@ def get_application() -> FastAPI:
     )
 
     origins = [
-        "http://localhost:3000",
-        "https://localhost:3001",
-        "https://localhost:3002",
+        "http://localhost:3001",
+        # "http://localhost:3000",
+        # "https://localhost:3001",
+        # "https://localhost:3002",
     ]
     # application.add_middleware(HTTPSRedirectMiddleware)
     # ADDED ALLOWED HEADERS AS IN TUTORIAL
@@ -70,9 +71,11 @@ def get_application() -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         # allow_origins=origins,
-        allow_origins= ["*"],
+        allow_origins= origins,
         allow_methods=["*"],
-        allow_headers=allowed_headers,
+        # allow_headers=allowed_headers,
+        # allow all headers
+        allow_headers=["*"],
         allow_credentials=True,
     )
 
@@ -133,6 +136,26 @@ async def websocket_endpoint(websocket: WebSocket, dependencies=Depends(JWTBeare
     print("token: ", token)
     payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
     user_id = payload['sub']
+    print("user_id: ", user_id)
+    await manager.connect(websocket, user_id)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message = Message(**json.loads(data))
+            await manager.send_personal_message(message)
+            new_msg = models.Conversation(typee = "msg",sender_id = message.sender, receiver_id = message.recipient ,
+                                          sender_name=get_username_by_id(message.sender,session),receiver_name=get_username_by_id(message.recipient,session),
+                                           msg_content= message.message, session_id='0000')
+
+            session.add(new_msg)
+            session.commit()
+            session.refresh(new_msg) 
+
+    except WebSocketDisconnect:
+        manager.disconnect(user_id)
+
+@app.websocket("/ws/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str,  session: Session = Depends(get_session)):
     print("user_id: ", user_id)
     await manager.connect(websocket, user_id)
     try:
