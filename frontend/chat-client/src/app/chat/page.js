@@ -2,8 +2,27 @@
 
 import { useEffect, useState } from "react";
 import axiosInstance from "../axios";
-
+import {io} from "socket.io-client";
 export default function Page() {
+  function getAuthToken() {
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split("=");
+      if (name === "jwt") {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  const socket = io("http://ws:localhost:8080/ws/harsh", {
+    auth: {
+      token: getAuthToken(),
+    },
+  });
+
+  socket.connect();
+
   const [users, setUsers] = useState([]);
   const getPeople = async () => {
     const res = await axiosInstance.get("/get_active_users");
