@@ -56,16 +56,16 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
             ))}
       </div>
       {/* here */}
-      <div class="mt-4 flex items-center justify-between w-full">
+      <div className="mt-4 flex items-center justify-between w-full">
         <input
           type="text"
           placeholder="Type a message..."
-          class="border border-gray-300 rounded-lg px-4 py-2 w-3/4 focus:outline-none focus:border-blue-500"
+          className="border border-gray-300 rounded-lg px-4 py-2 w-3/4 focus:outline-none focus:border-blue-500"
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
         />
         <button
-          class="bg-blue-500 text-white px-4 py-2 rounded-lg ml-4"
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg ml-4"
           onClick={sendMessage}
         >
           Send
