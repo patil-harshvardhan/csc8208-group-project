@@ -50,7 +50,7 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
   return (
     <div className="w-3/4 p-4 flex flex-col items-end">
       <h1 className="text-lg font-bold mb-4">Conversations</h1>
-      <div className="bg-white rounded-lg shadow-md p-4 w-full h-full">
+      <div className="bg-white rounded-lg shadow-md p-4 w-full h-full overflow-y-auto">
         {userMsgs.map((msg) => (
             <MessageComponent message={msg.message} sender={msg.sender} />
             ))}
