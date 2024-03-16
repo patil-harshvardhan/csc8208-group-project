@@ -47,6 +47,12 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
         }
     }, [selectedUser]);
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  }
+
   return (
     <div className="w-3/4 p-4 flex flex-col items-end">
       <h1 className="text-lg font-bold mb-4">Conversations</h1>
@@ -63,6 +69,7 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
           className="border border-gray-300 rounded-lg px-4 py-2 w-3/4 focus:outline-none focus:border-blue-500"
           value={msg}
           onChange={(e) => setMsg(e.target.value)}
+          onKeyDown={(e)=> handleKeyDown(e)}
         />
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded-lg ml-4"
