@@ -143,9 +143,9 @@ async def websocket_endpoint(websocket: WebSocket, dependencies=Depends(JWTBeare
             data = await websocket.receive_text()
             message = Message(**json.loads(data))
             await manager.send_personal_message(message)
-            new_msg = models.Conversation(typee = "msg",sender_id = message.sender, receiver_id = message.recipient ,
+            new_msg = models.Conversation(typee = message.typee,sender_id = message.sender, receiver_id = message.recipient ,
                                           sender_name=get_username_by_id(message.sender,session),receiver_name=get_username_by_id(message.recipient,session),
-                                           msg_content= message.message, session_id='0000')
+                                           msg_content= message.message, session_id=message.sessionId)
 
             session.add(new_msg)
             session.commit()
@@ -163,9 +163,9 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str,  session: Sessi
             data = await websocket.receive_text()
             message = Message(**json.loads(data))
             await manager.send_personal_message(message)
-            new_msg = models.Conversation(typee = "msg",sender_id = message.sender, receiver_id = message.recipient ,
+            new_msg = models.Conversation(typee = message.typee,sender_id = message.sender, receiver_id = message.recipient ,
                                           sender_name=get_username_by_id(message.sender,session),receiver_name=get_username_by_id(message.recipient,session),
-                                           msg_content= message.message, session_id='0000')
+                                           msg_content= message.message, session_id=message.sessionId)
 
             session.add(new_msg)
             session.commit()
@@ -363,8 +363,14 @@ async def get_active_users(
     print("users_json",users_json)
     return users_json
 
-@app.get("/chat_history/{user1}/{user2}")
-def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
+
+@app.get("/chat_history/{user2}")
+def get_chat_history(user2: str, dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
+    token = dependencies
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user1 = payload['sub']
+    print(user1)
+
     chat_history = db.query(models.Conversation).filter(
         ((models.Conversation.sender_id == user1) & (models.Conversation.receiver_id == user2)) |
         ((models.Conversation.sender_id == user2) & (models.Conversation.receiver_id == user1))
@@ -372,6 +378,30 @@ def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), 
     if not chat_history:
         raise HTTPException(status_code=404, detail="Chat history not found")
     return chat_history
+
+
+@app.get("/delete_msg/{conv_id}")
+def delete_message(conv_id: str, dependencies=Depends(JWTBearer()),db: Session = Depends(get_session)):
+    message = db.query(models.Conversation).filter(models.Conversation.conv_id == conv_id).first()
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    db.delete(message)
+    db.commit()
+    return {"message": "Message deleted successfully"}
+
+@app.get("/delete_chat_history/{user2}")
+def delete_chat_history(user2: str, dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
+    token = dependencies
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user1 = payload['sub']
+
+    db.query(models.Conversation).filter(
+        ((models.Conversation.sender_id == user1) & (models.Conversation.receiver_id == user2)) |
+        ((models.Conversation.sender_id == user2) & (models.Conversation.receiver_id == user1))
+    ).delete()
+    db.commit()
+
+    return {"message": "Chat history deleted successfully"}
 
 
 
