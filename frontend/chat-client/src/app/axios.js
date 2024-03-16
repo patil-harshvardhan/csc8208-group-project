@@ -24,6 +24,18 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+// axiosInstance.interceptors.response.use(
+//   (response) => {
+//     return response;
+//   },
+//   (error) => {
+//     if (error.response.status === 401) {
+//       // Handle 401 error
+//     }
+//     return Promise.reject(error);
+//   }
+// );
+
 // Function to retrieve the JWT token from cookies
 function getAuthToken() {
   const cookies = document.cookie.split(";");
