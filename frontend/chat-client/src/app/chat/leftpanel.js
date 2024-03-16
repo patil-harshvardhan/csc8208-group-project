@@ -10,11 +10,11 @@ const LeftPanel = ({users,setSelectedUser,userDetails,selectedUser}) => {
                       key={user.id}
                       onClick={() => setSelectedUser(user)}
                     >
-                      <img
+                      {/* <img
                         src="https://via.placeholder.com/40"
                         alt="User"
                         className="w-8 h-8 rounded-full mr-2"
-                      />
+                      /> */}
                       <span className="font-semibold">
                         {user.email} {userDetails.id === user.id ? "(You)" : ""}
                       </span>
