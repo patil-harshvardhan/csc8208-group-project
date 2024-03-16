@@ -45,7 +45,7 @@ export default function Page() {
         <div className="container mx-auto">
           <div className="py-6 h-screen">
             <div className="flex border border-grey rounded shadow-lg h-full">
-              <LeftPanel users={users} setSelectedUser={setSelectedUser} userDetails={userDetails}/>
+              <LeftPanel users={users} setSelectedUser={setSelectedUser} userDetails={userDetails} selectedUser={selectedUser}/>
               {selectedUser && <RightPanel ws={ws} selectedUser={selectedUser} userDetails={userDetails}/>}
             </div>
           </div>
