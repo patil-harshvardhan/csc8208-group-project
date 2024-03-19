@@ -12,7 +12,7 @@ SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-from app.models import User, TokenTable
+from app.models import User, TokenTable, UserKeys, Messages
 import app.schemas as schemas
 import os 
 from app.db.database import SessionLocal, engine, Base
@@ -26,7 +26,7 @@ from typing import Union, Any, Dict
 from jose import jwt
 from app.auth_bearer import JWTBearer
 import pytz
-from sqlalchemy import Column, Integer, String, select
+from sqlalchemy import Column, Integer, String, select, and_ , or_
 from starlette.middleware.cors import CORSMiddleware
 
 
@@ -45,8 +45,8 @@ def get_application() -> FastAPI:
     )
 
     origins = [
-        # "http://localhost:3001",
-        "http://localhost:3000",
+        "http://localhost:3001",
+        # "http://localhost:3000",
         # "https://localhost:3001",
         # "https://localhost:3002",
     ]
@@ -90,11 +90,11 @@ app = get_application()
 
 
 class Message(BaseModel):
-    typee: str 
-    sender: str
-    recipient: str
-    message: str
-    sessionId: str
+    msg_type: str 
+    sender_id: str
+    receiver_id: str
+    msg_content_sender_encrypted: str
+    msg_content_receiver_encrypted: str
 
 class ConnectionManager:
     def __init__(self):
@@ -112,47 +112,47 @@ class ConnectionManager:
 
     async def send(self, message: Message, r_websocket : WebSocket):
         # encrypted_message = fernet.encrypt(message.message.encode())
-        await r_websocket.send_text(json.dumps({"sender": message.sender, "message": message.message}))
+        await r_websocket.send_text(json.dumps({"sender": message.sender_id, "message": message.msg_content_receiver_encrypted}))
         # await r_websocket.send_text(json.dumps({"sender": message.sender, "message": base64.b64encode(encrypted_message).decode()}))
 
     def disconnect(self, user_id: str):
         self.active_connections.pop(user_id)
 
     async def send_personal_message(self, message: Message):
-        if message.recipient in self.active_connections:
-            websocket = self.active_connections[message.recipient]
+        if message.receiver_id in self.active_connections:
+            websocket = self.active_connections[message.receiver_id]
             await self.send(message, websocket)
             # store in DB
             
         else:
-            offline_messages.lpush(message.recipient, json.dumps(message.dict())) # remove await here, redis originally is sync
+            offline_messages.lpush(message.receiver_id, json.dumps(message.dict())) # remove await here, redis originally is sync
             
 
 manager = ConnectionManager()
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, dependencies=Depends(JWTBearer()),  session: Session = Depends(get_session)):
-    token = dependencies
-    print("token: ", token)
-    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
-    user_id = payload['sub']
-    print("user_id: ", user_id)
-    await manager.connect(websocket, user_id)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            message = Message(**json.loads(data))
-            await manager.send_personal_message(message)
-            new_msg = models.Conversation(typee = "msg",sender_id = message.sender, receiver_id = message.recipient ,
-                                          sender_name=get_username_by_id(message.sender,session),receiver_name=get_username_by_id(message.recipient,session),
-                                           msg_content= message.message, session_id='0000')
+# @app.websocket("/ws")
+# async def websocket_endpoint(websocket: WebSocket, dependencies=Depends(JWTBearer()),  session: Session = Depends(get_session)):
+#     token = dependencies
+#     print("token: ", token)
+#     payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+#     user_id = payload['sub']
+#     print("user_id: ", user_id)
+#     await manager.connect(websocket, user_id)
+#     try:
+#         while True:
+#             data = await websocket.receive_text()
+#             message = Message(**json.loads(data))
+#             await manager.send_personal_message(message)
+#             new_msg = models.Conversation(typee = "msg",sender_id = message.sender, receiver_id = message.recipient ,
+#                                           sender_name=get_username_by_id(message.sender,session),receiver_name=get_username_by_id(message.recipient,session),
+#                                            msg_content= message.message, session_id='0000')
 
-            session.add(new_msg)
-            session.commit()
-            session.refresh(new_msg) 
+#             session.add(new_msg)
+#             session.commit()
+#             session.refresh(new_msg) 
 
-    except WebSocketDisconnect:
-        manager.disconnect(user_id)
+#     except WebSocketDisconnect:
+#         manager.disconnect(user_id)
 
 @app.websocket("/ws/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, user_id: str,  session: Session = Depends(get_session)):
@@ -163,8 +163,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str,  session: Sessi
             data = await websocket.receive_text()
             message = Message(**json.loads(data))
             await manager.send_personal_message(message)
-            new_msg = models.Message(sender_id = message.sender, receiver_id = message.recipient ,
-                                           msg_content_sender_encrypted= message.msg_content_sender_encrypted, msg_content_receiver_encrypted = message.msg_content_receiver_encrypted,msg_type = message.type)
+            new_msg = Messages(sender_id = message.sender_id, receiver_id = message.receiver_id ,
+                                           msg_content_sender_encrypted= message.msg_content_sender_encrypted, msg_content_receiver_encrypted = message.msg_content_receiver_encrypted,msg_type = message.msg_type)
 
             session.add(new_msg)
             session.commit()
@@ -287,20 +287,6 @@ def login(request: schemas.requestdetails, db: Session = Depends(get_session)):
         "refresh_token": refresh,
     }
 
-@app.get('/getusers')
-def getusers( dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
-    user = session.query(models.User).all()
-    return user
-
-@app.get('/getuserdetails')
-def getusers(dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
-    token=dependencies
-    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
-    user_id = payload['sub']
-    user = session.query(models.User).filter(models.User.id == user_id).first()
-    print("user",user)
-    return {"id": user.id, "username": user.username, "email": user.email}
-
 @app.post('/logout')
 def logout(dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
     token=dependencies
@@ -340,48 +326,60 @@ def token_required(func):
         
     return wrapper
 
+# gets all the users from the database
+@app.get('/getusers')
+def getusers( dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
+    query = session.query(User, UserKeys).filter(and_(User.id == UserKeys.user_id, UserKeys.active == True))
+    results = query.all()
+    payload = []
+    for user, keys in results:
+        user_payload = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'public_key': keys.public_key
+        }
+        payload.append(user_payload)
+    return payload
 
-
+# gets all the active users from the database
 @app.get('/get_active_users')
 async def get_active_users(
-    dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)
+    dependencies=Depends(JWTBearer()), session: Session = Depends(get_session)
 ):
     user_ids = list(manager.active_connections.keys())
-    print("user_ids??",user_ids)
-    # users = db.query(User).options(exclude_properties=[User.password]).filter(User.id.in_(userids)).all()
-    users = db.execute(
-        select(
-            User.id,
-            User.username,
-            User.email
-        ).where(User.id.in_(user_ids))
-    ).fetchall()
-    print("users!!",users)
-    users_json = [
-        {
-            "id": str(user[0]),
-            "username": user[1],
-            "email": user[2]
+    query = session.query(User, UserKeys).filter(and_(User.id == UserKeys.user_id, UserKeys.active == True, User.id.in_(user_ids)))
+    results = query.all()
+    payload = []
+    for user, keys in results:
+        user_payload = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'public_key': keys.public_key
         }
-        for user in users
-    ]
-    print("users_json",users_json)
-    return users_json
+        payload.append(user_payload)
+    return payload
 
+# gets the details of the user
+@app.get('/getuserdetails')
+def getusers(dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
+    token=dependencies
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user_id = payload['sub']
+    user, user_keys = session.query(User,UserKeys).filter(and_(User.id == user_id,User.id == UserKeys.user_id, UserKeys.active == True)).first()
+    return {"id": user.id, "username": user.username, "email": user.email , "public_key": user_keys.public_key}
+
+# getting the chat history between two users
 @app.get("/chat_history/{user1}/{user2}")
 def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
-    chat_history = db.query(models.Conversation).filter(
-        ((models.Conversation.sender_id == user1) & (models.Conversation.receiver_id == user2)) |
-        ((models.Conversation.sender_id == user2) & (models.Conversation.receiver_id == user1))
-    ).all()
-    if not chat_history:
-        raise HTTPException(status_code=404, detail="Chat history not found")
-    return chat_history
+    get_chat_history = db.query(Messages).filter(or_(Messages.sender_id == user1, Messages.receiver_id == user1, Messages.sender_id == user2, Messages.receiver_id == user2)).all()
+    return get_chat_history
 
 
 
-def get_username_by_id(user_id: int,db: Session):
-    user = db.query(models.User).filter(models.User.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user.username
+# def get_username_by_id(user_id: int,db: Session):
+#     user = db.query(models.User).filter(models.User.id == user_id).first()
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     return user.username
