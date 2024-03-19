@@ -373,7 +373,8 @@ def getusers(dependencies=Depends(JWTBearer()),session: Session = Depends(get_se
 # getting the chat history between two users
 @app.get("/chat_history/{user1}/{user2}")
 def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
-    get_chat_history = db.query(Messages).filter(or_(Messages.sender_id == user1, Messages.receiver_id == user1, Messages.sender_id == user2, Messages.receiver_id == user2)).all()
+    # get_chat_history = db.query(Messages).filter(or_(Messages.sender_id == user1, Messages.receiver_id == user1, Messages.sender_id == user2, Messages.receiver_id == user2)).all()
+    get_chat_history = db.query(Messages).filter(or_(and_(Messages.sender_id == user1,Messages.receiver_id == user2),and_(Messages.receiver_id == user1, Messages.sender_id == user2))).all()
     return get_chat_history
 
 
