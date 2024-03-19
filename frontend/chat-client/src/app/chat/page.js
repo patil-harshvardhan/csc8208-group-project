@@ -9,16 +9,25 @@ export default function Page() {
   const [users, setUsers] = useState([]);
   const [userDetails, setUserDetails] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [activeUsers, setActiveUsers] = useState([]);
 
 
 
   const getPeople = async () => {
-    const res = await axiosInstance.get("/get_active_users");
+    const res = await axiosInstance.get("/getusers");
     if (res.status === 200) {
       console.log(res.data);
       setUsers(res.data);
     }
   };
+
+  const getActiveUsers = async () => {
+    const res = await axiosInstance.get("/get_active_users");
+    if (res.status === 200) {
+      console.log(res.data);
+      setActiveUsers(res.data);
+    }
+  }
 
   const getUserDetails = async () => {
     const res = await axiosInstance.get("/getuserdetails");
@@ -29,7 +38,10 @@ export default function Page() {
   };
 
   useEffect(() => {
-    if (ws) getPeople();
+    if (ws) {
+      getPeople();
+      getActiveUsers();
+    };
   }, [ws]);
 
   useEffect(() => {
@@ -45,7 +57,7 @@ export default function Page() {
         <div className="container mx-auto">
           <div className="py-6 h-screen">
             <div className="flex border border-grey rounded shadow-lg h-full">
-              <LeftPanel users={users} setSelectedUser={setSelectedUser} userDetails={userDetails} selectedUser={selectedUser}/>
+              <LeftPanel users={users} setSelectedUser={setSelectedUser} userDetails={userDetails} selectedUser={selectedUser} activeUsers={activeUsers}/>
               {selectedUser && <RightPanel ws={ws} selectedUser={selectedUser} userDetails={userDetails}/>}
             </div>
           </div>
