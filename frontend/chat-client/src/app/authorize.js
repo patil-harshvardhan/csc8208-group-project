@@ -5,31 +5,27 @@ import { useEffect, useState } from "react";
 
 const Authorize = ({ children }) => {
   // get current route
+  const router = useRouter();
   const [userDetails, setUserDetails] = useState(null);
   const checkAuthorization = async () => {
     const whiteListForUnAuthorized = ["/login", "/register", "change-password"];
-    const router = useRouter();
-    if (whiteListForUnAuthorized.includes(window.location.pathname)) return;
-
-    axiosInstance
-      .get("/getuserdetails")
-      .then((res) => {
-        if (res.status === 200) {
-          console.log("logged in user", res.data);
-          setUserDetails(res.data);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        if (!whiteListForUnAuthorized.includes(window.location.pathname)) {
-          router.push("/login");
-        }
-      });
-    console.log(window.location.pathname);
+    const currentPath = window.location.pathname;
+    if (whiteListForUnAuthorized.includes(currentPath)) return;
+    try {
+        console.log("checking auth");
+      const result = await axiosInstance.get("/getuserdetails");
+      if (result.status === 200) {
+        setUserDetails(result.data);
+      } else {
+        router.push("/login");
+      }
+    } catch (err) {
+        router.push("/login");
+    }
   };
-  useEffect(()=>{
+  useEffect(() => {
     checkAuthorization();
-  },[])
+  }, []);
   return children;
 };
 
