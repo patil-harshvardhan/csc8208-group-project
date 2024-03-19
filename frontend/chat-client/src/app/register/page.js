@@ -1,10 +1,11 @@
 "use client";
-import Image from "next/image";
-import { Input } from "postcss";
-import { useEffect, useState } from "react";
+import {useEffect, useState } from "react";
 import axios from "../axios";
-
 import { useRouter } from "next/navigation";
+
+// for e2e encryption
+import {JSEncrypt} from 'jsencrypt'
+import RegisterModal from "../components/registermodal";
 
 export default function register() {
   const [username, setUsername] = useState("");
@@ -13,6 +14,9 @@ export default function register() {
   const [confirmPassword, setconfirmPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  
+  const [publicKey, setPublicKey] = useState(null);
+  const [privateKey, setPrivateKey] = useState(null);
 
   const register = async () => {
     // Perform form validation
@@ -26,20 +30,35 @@ export default function register() {
       return;
     }
 
+    const encrypt = new JSEncrypt(process.env.LOCAL_KEY);
+    const crypt = new JSEncrypt({default_key_size: 2048});
+    const publicKey = crypt.getPublicKey();
+    const privateKey = crypt.getPrivateKey();
+
     const res = await axios.post("/register", {
       username,
       email,
       password,
+      public_key: publicKey,
     });
 
     if (res.status === 200) {
       console.log("User registered successfully", res);
-      router.push("/login");
+      // TODO: ENCRYPT BEFORE SAVING
+      localStorage.setItem("public_key", publicKey);
+      localStorage.setItem("private_key", privateKey);
+      setPrivateKey(privateKey);
+      setPublicKey(publicKey);
     }
   };
 
+  useEffect(()=>{
+    console.log("Fired Once Only")
+  },[])
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      {privateKey && publicKey && <RegisterModal publicKey={publicKey} privateKey={privateKey}/>}
       <div className="w-full max-w-xs">
         <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         <div className="flex items-center justify-center space-x-2 mb-6"><h1 className="text-xl font-semibold">Register New User</h1></div>
@@ -90,9 +109,6 @@ export default function register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             ></input>
-            {/* <p className="text-red-500 text-xs italic">
-              Please choose a password.
-            </p> */}
           </div>
           <div className="mb-6">
             <label
@@ -132,9 +148,6 @@ export default function register() {
             </a>
           </div>
         </form>
-        <p className="text-center text-gray-500 text-xs">
-          &copy;2020 Acme Corp. All rights reserved.
-        </p>
       </div>
     </main>
   );

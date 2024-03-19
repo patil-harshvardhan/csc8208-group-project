@@ -8,7 +8,7 @@ const Authorize = ({ children }) => {
   const router = useRouter();
   const [userDetails, setUserDetails] = useState(null);
   const checkAuthorization = async () => {
-    const whiteListForUnAuthorized = ["/login", "/register", "change-password"];
+    const whiteListForUnAuthorized = ["/login", "/register", "change-password","/test"];
     const currentPath = window.location.pathname;
     if (whiteListForUnAuthorized.includes(currentPath)) return;
     try {
