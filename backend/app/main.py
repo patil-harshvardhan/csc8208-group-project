@@ -163,9 +163,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str,  session: Sessi
             data = await websocket.receive_text()
             message = Message(**json.loads(data))
             await manager.send_personal_message(message)
-            new_msg = models.Conversation(typee = "msg",sender_id = message.sender, receiver_id = message.recipient ,
-                                          sender_name=get_username_by_id(message.sender,session),receiver_name=get_username_by_id(message.recipient,session),
-                                           msg_content= message.message, session_id='0000')
+            new_msg = models.Message(sender_id = message.sender, receiver_id = message.recipient ,
+                                           msg_content_sender_encrypted= message.msg_content_sender_encrypted, msg_content_receiver_encrypted = message.msg_content_receiver_encrypted,msg_type = message.type)
 
             session.add(new_msg)
             session.commit()
@@ -233,13 +232,19 @@ def register_user(user: schemas.UserCreate, session: Session = Depends(get_sessi
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    encrypted_password = get_hashed_password(user.password) #TODO encrypt the password
+    encrypted_password = get_hashed_password(user.password)
 
+    # create new user
     new_user = models.User(username=user.username, email=user.email, password=encrypted_password )
-
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
+
+    # create user keys
+    new_key = models.UserKeys(user_id=new_user.id, public_key=user.public_key, active=True)
+    session.add(new_key)
+    session.commit()
+    session.refresh(new_key)
 
     return {"message":"user created successfully"}
 

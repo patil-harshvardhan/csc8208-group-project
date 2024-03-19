@@ -30,4 +30,20 @@ class Conversation(Base):
     msg_content =  Column(String)
     msg_timestamp = Column(DateTime, default=datetime.datetime.now)
     session_id = Column(Integer) 
+
+class Message(Base):
+    __tablename__ = "messages"
+    msg_id = Column(Integer, primary_key=True)
+    sender_id = Column(String)
+    receiver_id = Column(String)
+    msg_content_sender_encrypted =  Column(String)
+    msg_content_receiver_encrypted =  Column(String)
+    msg_timestamp = Column(DateTime, default=datetime.datetime.now)
+    msg_type = Column(String)
+
+class UserKeys(Base):
+    __tablename__ = "user_keys"
+    user_id = Column(String, primary_key=True)
+    public_key = Column(String)
+    active = Column(Boolean)
    
