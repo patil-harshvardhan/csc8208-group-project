@@ -1,9 +1,11 @@
 import { OfflineDot, OnlineDot } from "./helpercomponents";
+import UserProfile from "./userprofile";
 
 const LeftPanel = ({users,setSelectedUser,userDetails,selectedUser,activeUsers}) => {
     return (
         <div className="bg-gray-200 h-full w-1/4 p-4">
-                <h1 className="text-lg font-bold mb-4">People</h1>
+                <UserProfile userDetails={userDetails} />
+                <h1 className="text-lg font-bold mb-4 mt-4">People</h1>
                 <ul>
                   {users.map((user) => (
                     <li
