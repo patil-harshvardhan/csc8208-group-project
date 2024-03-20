@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS token (
     user_id UUID REFERENCES users(id),
+    ip VARCHAR(255),
     access_token VARCHAR(450),
     refresh_token VARCHAR(450) NOT NULL,
     status BOOLEAN,

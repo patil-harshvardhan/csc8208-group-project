@@ -22,6 +22,7 @@ class changepassword(BaseModel):
 
 class TokenCreate(BaseModel):
     user_id:str
+    ip:str
     access_token:str
     refresh_token:str
     status:bool
