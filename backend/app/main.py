@@ -90,11 +90,21 @@ app = get_application()
 
 
 class Message(BaseModel):
+    msg_id: str
     msg_type: str 
     sender_id: str
     receiver_id: str
     msg_content_sender_encrypted: str
     msg_content_receiver_encrypted: str
+    def json(self):
+        return {
+            "msg_id": self.msg_id,
+            "msg_type": self.msg_type,
+            "sender_id": self.sender_id,
+            "receiver_id": self.receiver_id,
+            "msg_content_sender_encrypted": self.msg_content_sender_encrypted,
+            "msg_content_receiver_encrypted": self.msg_content_receiver_encrypted
+        }
 
 class ConnectionManager:
     def __init__(self):
@@ -112,7 +122,7 @@ class ConnectionManager:
 
     async def send(self, message: Message, r_websocket : WebSocket):
         # encrypted_message = fernet.encrypt(message.message.encode())
-        await r_websocket.send_text(json.dumps({"sender": message.sender_id, "message": message.msg_content_receiver_encrypted}))
+        await r_websocket.send_text(json.dumps(message.json()))
         # await r_websocket.send_text(json.dumps({"sender": message.sender, "message": base64.b64encode(encrypted_message).decode()}))
 
     def disconnect(self, user_id: str):
@@ -164,7 +174,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str,  session: Sessi
             message = Message(**json.loads(data))
             await manager.send_personal_message(message)
             new_msg = Messages(sender_id = message.sender_id, receiver_id = message.receiver_id ,
-                                           msg_content_sender_encrypted= message.msg_content_sender_encrypted, msg_content_receiver_encrypted = message.msg_content_receiver_encrypted,msg_type = message.msg_type)
+                                           msg_content_sender_encrypted= message.msg_content_sender_encrypted, msg_content_receiver_encrypted = message.msg_content_receiver_encrypted,msg_type = message.msg_type, msg_id = message.msg_id)
 
             session.add(new_msg)
             session.commit()

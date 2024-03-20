@@ -39,6 +39,14 @@ const UserProfileDropdown = ({ username, onLogout }) => {
               onClick={handleLogout}
               className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
             >
+              Manage Keys
+            </button>
+          </div>
+          <div className="py-1">
+            <button
+              onClick={handleLogout}
+              className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
+            >
               Logout
             </button>
           </div>

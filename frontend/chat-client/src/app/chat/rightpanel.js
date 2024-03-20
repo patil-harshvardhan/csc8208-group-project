@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import MessageComponent from "./message";
 import axiosInstance from "../axios";
 import { JSEncrypt } from "jsencrypt";
+import {v4 as uuidv4} from 'uuid'
 
 const RightPanel = ({ ws, selectedUser, userDetails }) => {
   const [msg, setMsg] = useState("");
@@ -15,29 +16,32 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
     let crypt2 = new JSEncrypt();
     crypt2.setPublicKey(userDetails.public_key);
     const msg_content_sender_encrypted = crypt2.encrypt(msg);
-
+    // generate a UUID for the message
+    const msg_id = uuidv4();
+    const message_payload ={
+      msg_type: "msg",
+      sender_id: userDetails.id,
+      receiver_id: selectedUser.id,
+      msg_content_sender_encrypted: msg_content_sender_encrypted,
+      msg_content_receiver_encrypted: msg_content_receiver_encrypted,
+      msg_id
+    }
     ws.send(
-      JSON.stringify({
-        msg_type: "msg",
-        sender_id: userDetails.id,
-        receiver_id: selectedUser.id,
-        msg_content_sender_encrypted: msg_content_sender_encrypted,
-        msg_content_receiver_encrypted: msg_content_receiver_encrypted,
-      })
+      JSON.stringify(message_payload)
     );
 
     setMsg("");
-    setUserMsgs([...userMsgs, { sender: true, message: msg }]);
+    setUserMsgs([...userMsgs, { sender: true, message: msg ,...message_payload}]);
   };
 
   ws.onmessage = (event) => {
     console.log(event.data);
     const data = JSON.parse(event.data);
-    if (selectedUser.id === data.sender) {
+    if (selectedUser.id === data.sender_id) {
       let crypt = new JSEncrypt();
       crypt.setPrivateKey(localStorage.getItem("private_key"));
-      const message = crypt.decrypt(data.message);
-      setUserMsgs([...userMsgs, { sender: false, message: message }]);
+      const message = crypt.decrypt(data.msg_content_receiver_encrypted);
+      setUserMsgs([...userMsgs, { sender: false, message: message, ...data }]);
     }
   };
 
@@ -54,7 +58,8 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
         const message = crypt.decrypt(sender ? msg.msg_content_sender_encrypted : msg.msg_content_receiver_encrypted);
         return {
           message: message ,
-          sender: sender
+          sender: sender,
+          ...msg
         };
       });
       setUserMsgs(msgs);
@@ -79,7 +84,7 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
       <h1 className="text-lg font-bold mb-4">Conversations</h1>
       <div className="bg-white rounded-lg shadow-md p-4 w-full h-full overflow-y-auto">
         {userMsgs.map((msg) => (
-          <MessageComponent message={msg.message} sender={msg.sender} />
+          <MessageComponent message={msg.message} sender={msg.sender} key={msg.msg_id}/>
         ))}
       </div>
       {/* here */}
