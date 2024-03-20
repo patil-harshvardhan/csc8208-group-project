@@ -1,0 +1,8 @@
+#!/usr/bin/expect -f
+set timeout -1
+set password "postgres"
+
+spawn /backup.sh
+expect "Password:"
+send "$password\r"
+interact
