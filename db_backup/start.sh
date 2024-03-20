@@ -3,6 +3,6 @@
 
 while true; do
     /auto_run.exp
-    sleep 60*15  # Wait for 15 min before running again
+    sleep 900  # Wait for 15 min before running again
 done
 
