@@ -21,6 +21,9 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5432:5432"
+    volumes:
+      - ./db/postgresql.conf:/etc/postgresql.conf
+      # - ./db/pg_hba.conf:/etc/pg_hba.conf
     expose:
       - 5432
     env_file:
@@ -32,6 +35,20 @@ services:
       retries: 5
     # volumes:
     #   - postgres_data:/var/lib/postgresql/data
+    restart: always
+  
+  db_backup:
+    container_name: db_backup
+    # image: postgres:14-alpine
+    build: 
+      context: ./db_backup
+      dockerfile: Dockerfile
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./db_backup/postgresql.conf:/etc/postgresql.conf
+    expose:
+      - 5432
     restart: always
   
   backend:
@@ -63,7 +80,7 @@ services:
       - ./.env
     restart: on-failure
     depends_on:
-      - db
+      # - db
       - backend
       - redis
 
@@ -76,6 +93,20 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: group@group.com
       PGADMIN_DEFAULT_PASSWORD: group
+
+  # Service for Prometheus
+  prometheus:
+    # Use the official Prometheus image
+    image: prom/prometheus
+    # Expose ports for Prometheus
+    ports:
+      - "9090:9090"
+    # Mount the local Prometheus configuration file
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    # Command to start Prometheus with the specified configuration file
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
 
   # nginx:
   #   image: nginx

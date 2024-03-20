@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, HTTPException, status, FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, status, FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel
 import json
@@ -274,7 +274,7 @@ def change_password(request: schemas.changepassword, db: Session = Depends(get_s
     return {"message": "Password changed successfully"}
 
 @app.post('/login' ,response_model=schemas.TokenSchema)
-def login(request: schemas.requestdetails, db: Session = Depends(get_session)):
+def login(request: schemas.requestdetails, request1: Request, db: Session = Depends(get_session)):
     user = db.query(User).filter(User.email == request.email).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect email")
@@ -284,11 +284,15 @@ def login(request: schemas.requestdetails, db: Session = Depends(get_session)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect password"
         )
-    
+    ip  = request1.client.host
+    dttect_bot = detect_botnets(user.id , ip ,db) 
+    if(dttect_bot):
+        raise HTTPException(status_code=403, detail="Access denied")
+
     access=create_access_token(user.id)
     refresh = create_refresh_token(user.id)
 
-    token_db = models.TokenTable(user_id=user.id,  access_token=access,  refresh_token=refresh, status=True)
+    token_db = models.TokenTable(user_id=user.id, ip = ip , access_token=access,  refresh_token=refresh, status=True)
     db.add(token_db)
     db.commit()
     db.refresh(token_db)
@@ -387,10 +391,45 @@ def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), 
     get_chat_history = db.query(Messages).filter(or_(and_(Messages.sender_id == user1,Messages.receiver_id == user2),and_(Messages.receiver_id == user1, Messages.sender_id == user2))).all()
     return get_chat_history
 
-
-
 # def get_username_by_id(user_id: int,db: Session):
 #     user = db.query(models.User).filter(models.User.id == user_id).first()
 #     if not user:
 #         raise HTTPException(status_code=404, detail="User not found")
 #     return user.username
+
+@app.get("/delete_msg/{msg_id}") 
+def delete_message(msg_id: str, dependencies=Depends(JWTBearer()),db: Session = Depends(get_session)):
+    message = db.query(models.Messages).filter(models.Messages.msg_id == msg_id).first()
+    #if not message:
+        #raise HTTPException(status_code=404, detail="Message not found")
+    db.delete(message)
+    db.commit()
+    return {"message": "Message deleted successfully"}
+
+@app.get("/delete_chat_history/{user2}")
+def delete_chat_history(user2: str, dependencies=Depends(JWTBearer()), db: Session = Depends(get_session)):
+    token = dependencies
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user1 = payload['sub']
+
+    db.query(models.Messages).filter(
+        ((models.Messages.sender_id == user1) & (models.Messages.receiver_id == user2)) |
+        ((models.Messages.sender_id == user2) & (models.Messages.receiver_id == user1))
+    ).delete()
+    db.commit()
+
+    return {"message": "Chat history deleted successfully"}
+
+def detect_botnets(id: str , ip: str, db) -> bool:
+    status = False
+    # look in db same user how many ips 
+   # count = db.query(func.count(TokenTable.id)).filter(TokenTable.ip_address == user_data.ip_address).scalar()
+    unique_ip_count = db.query(TokenTable.ip).filter(TokenTable.user_id == id).distinct().count()
+    print(f'unique_ip_count: {unique_ip_count}')
+    # look for ip, how many user use this ip
+    user_count = db.query(TokenTable.user_id).filter(TokenTable.ip == ip).distinct().count()
+    print(f'user_count: {user_count}')
+    if (unique_ip_count >2) or (user_count > 2):
+        status =  True 
+
+    return status
