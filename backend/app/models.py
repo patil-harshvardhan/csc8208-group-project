@@ -47,3 +47,9 @@ class UserKeys(Base):
     public_key = Column(String)
     active = Column(Boolean)
    
+class Files(Base):
+    __tablename__ = "files"
+    file_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    file_type = Column(String)
+    sender_id = Column(String , ForeignKey('users.id'))
+    file_path = Column(String)
