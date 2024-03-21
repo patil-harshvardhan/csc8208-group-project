@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axiosInstance from "../axios";
 import RightPanel from "./rightpanel";
 import LeftPanel from "./leftpanel";
+import { startPolling } from "../helper";
 export default function Page() {
   const [ws, setWs] = useState(null);
   const [users, setUsers] = useState([]);
@@ -13,21 +14,21 @@ export default function Page() {
 
 
 
-  const getPeople = async () => {
-    const res = await axiosInstance.get("/getusers");
-    if (res.status === 200) {
-      console.log(res.data);
-      setUsers(res.data);
-    }
-  };
+  // const getPeople = async () => {
+  //   const res = await axiosInstance.get("/getusers");
+  //   if (res.status === 200) {
+  //     console.log(res.data);
+  //     setUsers(res.data);
+  //   }
+  // };
 
-  const getActiveUsers = async () => {
-    const res = await axiosInstance.get("/get_active_users");
-    if (res.status === 200) {
-      console.log(res.data);
-      setActiveUsers(res.data);
-    }
-  }
+  // const getActiveUsers = async () => {
+  //   const res = await axiosInstance.get("/get_active_users");
+  //   if (res.status === 200) {
+  //     console.log(res.data);
+  //     setActiveUsers(res.data);
+  //   }
+  // }
 
   const getUserDetails = async () => {
     const res = await axiosInstance.get("/getuserdetails");
@@ -39,8 +40,14 @@ export default function Page() {
 
   useEffect(() => {
     if (ws) {
-      getPeople();
-      getActiveUsers();
+      // getPeople();
+      // getActiveUsers();
+      startPolling("/getusers", (data) => {
+        setUsers(data)
+      });
+      startPolling("/get_active_users", (data) => {
+        setActiveUsers(data)
+      });
     };
   }, [ws]);
 

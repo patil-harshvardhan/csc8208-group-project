@@ -45,8 +45,8 @@ def get_application() -> FastAPI:
     )
 
     origins = [
-        # "http://localhost:3001",
-        "http://localhost:3000",
+        "http://localhost:3001",
+        # "http://localhost:3000",c
         # "https://localhost:3001",
         # "https://localhost:3002",
     ]
@@ -432,4 +432,4 @@ def detect_botnets(id: str , ip: str, db) -> bool:
     if (unique_ip_count >2) or (user_count > 2):
         status =  True 
 
-    return status
+    return False

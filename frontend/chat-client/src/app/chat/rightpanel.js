@@ -7,14 +7,37 @@ import {v4 as uuidv4} from 'uuid'
 const RightPanel = ({ ws, selectedUser, userDetails }) => {
   const [msg, setMsg] = useState("");
   const [userMsgs, setUserMsgs] = useState([]);
+  let crypt = new JSEncrypt();
+  crypt.setPublicKey(selectedUser.public_key);
+  
+  let crypt2 = new JSEncrypt();
+  crypt2.setPublicKey(userDetails.public_key);
+  crypt2.setPrivateKey(localStorage.getItem("private_key"));
+
+  
+
+  const onDelete = async (id) => {
+    const res = await axiosInstance.get(`/delete_msg/${id}`);
+    if (res.status === 200) {
+      console.log(userMsgs)
+      console.log(userMsgs.filter((msg) => msg.msg_id !== id))
+      setUserMsgs(userMsgs.filter((msg) => msg.msg_id !== id));
+      const message_payload ={
+        msg_type: "delete_msg",
+        sender_id: userDetails.id,
+        receiver_id: selectedUser.id,
+        msg_content_sender_encrypted: crypt2.encrypt(id),  
+        msg_content_receiver_encrypted: crypt.encrypt(id),
+        msg_id: uuidv4()
+      }
+      ws.send(
+        JSON.stringify(message_payload)
+      )
+    }
+  }
 
   const sendMessage = () => {
-    let crypt = new JSEncrypt();
-    crypt.setPublicKey(selectedUser.public_key);
     const msg_content_receiver_encrypted = crypt.encrypt(msg);
-
-    let crypt2 = new JSEncrypt();
-    crypt2.setPublicKey(userDetails.public_key);
     const msg_content_sender_encrypted = crypt2.encrypt(msg);
     // generate a UUID for the message
     const msg_id = uuidv4();
@@ -38,9 +61,13 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
     console.log(event.data);
     const data = JSON.parse(event.data);
     if (selectedUser.id === data.sender_id) {
-      let crypt = new JSEncrypt();
-      crypt.setPrivateKey(localStorage.getItem("private_key"));
-      const message = crypt.decrypt(data.msg_content_receiver_encrypted);
+
+      const message = crypt2.decrypt(data.msg_content_receiver_encrypted);
+      console.log(message,userMsgs.filter((msg) => msg.msg_id !== message))
+      if(data.msg_type === "delete_msg"){
+        setUserMsgs([...userMsgs.filter((msg) => msg.msg_id !== message), { sender: false, message: message, ...data }]);
+      }
+      else
       setUserMsgs([...userMsgs, { sender: false, message: message, ...data }]);
     }
   };
@@ -84,7 +111,7 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
       <h1 className="text-lg font-bold mb-4">Conversations</h1>
       <div className="bg-white rounded-lg shadow-md p-4 w-full h-full overflow-y-auto">
         {userMsgs.map((msg) => (
-          <MessageComponent message={msg.message} sender={msg.sender} key={msg.msg_id}/>
+          <MessageComponent message={msg.message} sender={msg.sender} key={msg.msg_id} onDelete={onDelete} msg_id={msg.msg_id} data={msg}/>
         ))}
       </div>
       {/* here */}
