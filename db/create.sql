@@ -48,3 +48,11 @@ CREATE TABLE IF NOT EXISTS user_keys (
     PRIMARY KEY (user_id)
 );
 
+
+CREATE TABLE IF NOT EXISTS files (
+  file_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  file_path VARCHAR(255) NOT NULL,
+  sender_id varchar(255) NOT NULL,
+  file_type VARCHAR(255) NOT NULL,
+  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

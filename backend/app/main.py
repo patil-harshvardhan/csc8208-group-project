@@ -391,6 +391,62 @@ def get_chat_history(user1: str, user2: str, dependencies=Depends(JWTBearer()), 
     get_chat_history = db.query(Messages).filter(or_(and_(Messages.sender_id == user1,Messages.receiver_id == user2),and_(Messages.receiver_id == user1, Messages.sender_id == user2))).all()
     return get_chat_history
 
+# class File(BaseModel):
+#     msg_type: str 
+#     sender_id: str
+#     receiver_id: str
+#     msg_content_sender_encrypted: str
+#     msg_content_receiver_encrypted: str
+
+
+from fastapi import  UploadFile
+from fastapi.responses import FileResponse
+from pathlib import Path
+import uuid
+@app.post("/upload-file")
+async def upload_file(file: UploadFile, dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
+    token=dependencies
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user_id = payload['sub']
+
+    contents = await file.read()  # Read file content
+
+    # Generate a unique UUID for the file ID
+    file_id = str(uuid.uuid4())
+    upload_dir = Path("uploads")
+    save_path = upload_dir / file_id  # Use the file ID as part of the path
+    save_path.parent.mkdir(parents=True, exist_ok=True)  # Create directory if it doesn't exist
+
+    # Save the file
+    with open(save_path, "wb") as f:
+        f.write(contents)
+
+    file_db = models.Files(file_id=file_id, file_type=file.content_type, sender_id=user_id, file_path=str(save_path))
+    session.add(file_db)
+    session.commit()
+    session.refresh(file_db)
+
+    # Insert data into your file table using your preferred database library
+
+    return { "file_id": file_id, "file_path": str(save_path), "file_type": file.content_type, "sender_id": user_id}
+
+class DownloadFile(BaseModel):
+    file_id: str
+# corresponding download file api
+@app.post("/download-file")
+async def download_file(file_model: DownloadFile, dependencies=Depends(JWTBearer()),session: Session = Depends(get_session)):
+    print('fuck!')
+    token=dependencies
+    payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
+    user_id = payload['sub']
+
+    file = session.query(models.Files).filter_by(file_id=file_model.file_id).first()
+    if file is None:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Return the file 
+    return FileResponse(file.file_path, media_type=file.file_type)
+    # return {"file_path": file.file_path, "file_type": file.file_type}
 # def get_username_by_id(user_id: int,db: Session):
 #     user = db.query(models.User).filter(models.User.id == user_id).first()
 #     if not user:
@@ -433,3 +489,6 @@ def detect_botnets(id: str , ip: str, db) -> bool:
         status =  True 
 
     return status
+
+from prometheus_fastapi_instrumentator import Instrumentator
+Instrumentator().instrument(app).expose(app)
