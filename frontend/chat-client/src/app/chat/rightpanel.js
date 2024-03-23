@@ -29,7 +29,7 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
     ws.send(JSON.stringify(message_payload));
     setUserMsgs([
       ...userMsgs,
-      { sender: true, message: "File Uploaded", ...message_payload },
+      { sender: true, message: respose.file_id, ...message_payload },
     ]);
   }
 

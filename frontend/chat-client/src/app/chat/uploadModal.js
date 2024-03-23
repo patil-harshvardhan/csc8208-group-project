@@ -1,12 +1,11 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { getAuthToken } from "../axios";
 
 const UploadModal = ({ isOpen, onClose }) => {
   const [file, setFile] = useState(null);
   axios.defaults.baseURL = "http://localhost:8080";
-  //   set bearer token
-  axios.defaults.headers.common["Authorization"] =
-    "Bearer " + localStorage.getItem("token");
+  
 
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
@@ -25,6 +24,7 @@ const UploadModal = ({ isOpen, onClose }) => {
       const res = await axios.post("/upload-file", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          "Authorization": "Bearer " + getAuthToken(),
         },
       });
       onClose(res.data);

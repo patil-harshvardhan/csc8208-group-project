@@ -49,3 +49,5 @@ function getAuthToken() {
 }
 
 export default axiosInstance;
+
+export { getAuthToken };

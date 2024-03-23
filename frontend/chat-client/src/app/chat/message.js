@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { FileMessage } from "./messagecomponents";
 
 const MessageComponent = ({ message, sender, onDelete, msg_id, data }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -28,7 +29,10 @@ const MessageComponent = ({ message, sender, onDelete, msg_id, data }) => {
       </button>
     );
   };
+  if (data.msg_type === "file")
+  return  (<FileMessage data={data} />)
 
+  else
   return (
     <div className="chat-message my-2">
       {data.msg_type !== "delete_msg" ? (
