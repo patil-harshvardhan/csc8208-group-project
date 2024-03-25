@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "../axios";
+import KeyChangeModal from "./modelmanagekeys";
 
 const UserProfileDropdown = ({ username, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [openManageKeys, setOpenManageKeys] = useState(false);
   const router = useRouter();
 
   const handleLogout = () => {
@@ -18,7 +20,7 @@ const UserProfileDropdown = ({ username, onLogout }) => {
     <div className="relative inline-block text-left">
       <div>
         <button
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {setIsOpen(!isOpen)}}
           className="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition duration-150 ease-in-out"
         >
           <div className="relative w-10 h-10 overflow-hidden bg-gray-100 rounded-full dark:bg-gray-600">
@@ -41,7 +43,10 @@ const UserProfileDropdown = ({ username, onLogout }) => {
         <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
           <div className="py-1">
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                setOpenManageKeys(true);
+                setIsOpen(false);
+              }}
               className="block w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-gray-100"
             >
               Manage Keys
@@ -57,6 +62,7 @@ const UserProfileDropdown = ({ username, onLogout }) => {
           </div>
         </div>
       )}
+      {openManageKeys && <KeyChangeModal isOpen={openManageKeys} onClose={() => setOpenManageKeys(false)}/>}
     </div>
   );
 };
