@@ -45,8 +45,8 @@ def get_application() -> FastAPI:
     )
 
     origins = [
-        "http://localhost:3001",
-        # "http://localhost:3000",
+        # "http://localhost:3001",
+        "http://localhost:3000",
         # "https://localhost:3001",
         # "https://localhost:3002",
     ]
@@ -488,7 +488,7 @@ def detect_botnets(id: str , ip: str, db) -> bool:
     if (unique_ip_count >2) or (user_count > 2):
         status =  True 
 
-    return False
+    return status
 
 from prometheus_fastapi_instrumentator import Instrumentator
 Instrumentator().instrument(app).expose(app)
