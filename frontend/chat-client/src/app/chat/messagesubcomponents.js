@@ -26,46 +26,67 @@ const DeleteButton = ({ data, onDelete }) => {
   );
 };
 
+import axios from "axios";
+
 const DownloadFileButton = ({ data }) => {
   const onDownloadClick = async () => {
-    const res = await axiosInstance.post("/download-file", { file_id: data.message } , { responseType: 'blob' });
-    // download file
-    console.log(res);
-    const medidaType = res.headers["content-type"];
-    const extension = medidaType.split("/")[1];
-    const fileName = data.message + "." + extension;
-    console.log(fileName);
-    console.log(extension);
-    const url  = window.URL.createObjectURL(new Blob([res]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    try {
+      const res = await axiosInstance.post(
+        "/download-file",
+        { file_id: data.message },
+        { responseType: "blob" }
+      );
+
+      let extension = "";
+
+      const contentType = res.headers["content-type"];
+      if (contentType) {
+        // Extract extension from content type
+        const typeParts = contentType.split("/");
+        if (typeParts.length === 2) {
+          extension = typeParts[1];
+        }
+      }
+
+      let fileName = `${data.message}.${extension}`;
+
+      // Create blob and URL for download
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+
+      // Create link and initiate download
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+    }
   };
+
   return (
     <button
-      className=" px-1 py-1 mx-2 bg-blue-500 text-white rounded-full hover:bg-purple-600"
+      className="px-1 py-1 mx-2 bg-blue-500 text-white rounded-full hover:bg-purple-600"
       onClick={onDownloadClick}
     >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      strokeWidth="1.5"
-      stroke="currentColor"
-      className="w-4 h-4 inline-block"
-      // onClick={onDownloadClick}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-      />
-     
-    </svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth="1.5"
+        stroke="currentColor"
+        className="w-4 h-4 inline-block"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+        />
+      </svg>
     </button>
   );
 };
