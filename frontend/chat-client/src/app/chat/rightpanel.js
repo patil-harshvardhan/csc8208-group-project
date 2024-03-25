@@ -137,11 +137,7 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
       <div className="bg-white rounded-lg shadow-md p-4 w-full h-full overflow-y-auto">
         {userMsgs.map((msg) => (
           <MessageComponent
-            message={msg.message}
-            sender={msg.sender}
-            key={msg.msg_id}
             onDelete={onDelete}
-            msg_id={msg.msg_id}
             data={msg}
           />
         ))}
@@ -162,7 +158,7 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
           viewBox="0 0 24 24"
           stroke-width="1.5"
           stroke="currentColor"
-          class="w-6 h-6"
+          className="w-6 h-6"
           onClick={() => setOpenUploadModal(true)}
         >
           <path
