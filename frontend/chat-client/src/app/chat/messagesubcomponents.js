@@ -70,7 +70,7 @@ const DownloadFileButton = ({ data }) => {
 
   return (
     <button
-      className="px-1 py-1 mx-2 bg-blue-500 text-white rounded-full hover:bg-purple-600"
+      className="px-1 py-1 mx-2 bg-blue-400 text-white rounded-full hover:bg-blue-500"
       onClick={onDownloadClick}
     >
       <svg
