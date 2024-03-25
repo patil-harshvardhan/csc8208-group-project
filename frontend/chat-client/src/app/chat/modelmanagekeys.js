@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const KeyChangeModal = ({ isOpen, onClose }) => {
   const [publicKey, setPublicKey] = useState('');
@@ -15,6 +15,25 @@ const KeyChangeModal = ({ isOpen, onClose }) => {
       setPrivateKey(storedPrivateKey);
     }
   }, []);
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const content = e.target.result;
+      // Extract public and private keys from the content
+      const matches = content.match(/Public Key: (.+?)Private Key: (.+)/s);
+      if (matches && matches.length === 3) {
+        setPublicKey(matches[1]);
+        setPrivateKey(matches[2]);
+      } else {
+        alert('Invalid file format');
+      }
+    };
+
+    reader.readAsText(file);
+  };
 
   const handleSaveKeys = () => {
     // Save keys to local storage
@@ -49,6 +68,16 @@ const KeyChangeModal = ({ isOpen, onClose }) => {
                 placeholder="Enter private key"
                 value={privateKey}
                 onChange={(e) => setPrivateKey(e.target.value)}
+              />
+            </div>
+            <div className="mb-4">
+              <label htmlFor="upload-keys" className="block text-sm font-medium text-gray-700">Upload Keys</label>
+              <input
+                id="upload-keys"
+                type="file"
+                accept=".txt"
+                onChange={handleFileChange}
+                className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
               />
             </div>
           </div>
