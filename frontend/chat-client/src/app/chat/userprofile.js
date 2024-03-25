@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import axiosInstance from "../axios";
 
 const UserProfileDropdown = ({ username, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
 
   const handleLogout = () => {
-    router.push("/login");
+    axiosInstance.post("/logout").then(() => {
+      localStorage.removeItem("public_key");
+      localStorage.removeItem("private_key");
+      router.push("/login");
+    });
   };
 
   return (
