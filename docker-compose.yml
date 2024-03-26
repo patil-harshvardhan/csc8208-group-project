@@ -84,37 +84,37 @@ services:
       - backend
       - redis
 
-  # pgadmin:
-  #   image: dpage/pgadmin4
-  #   container_name: pgadmin4_container
-  #   restart: always
-  #   ports:
-  #     - "8888:80"
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: group@group.com
-  #     PGADMIN_DEFAULT_PASSWORD: group
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - "8888:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: group@group.com
+      PGADMIN_DEFAULT_PASSWORD: group
 
-  # # Service for Prometheus
-  # prometheus:
-  #   # Use the official Prometheus image
-  #   image: prom/prometheus
-  #   # Expose ports for Prometheus
-  #   ports:
-  #     - "9090:9090"
-  #   # Mount the local Prometheus configuration file
-  #   volumes:
-  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-  #   # Command to start Prometheus with the specified configuration file
-  #   command:
-  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  # Service for Prometheus
+  prometheus:
+    # Use the official Prometheus image
+    image: prom/prometheus
+    # Expose ports for Prometheus
+    ports:
+      - "9090:9090"
+    # Mount the local Prometheus configuration file
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    # Command to start Prometheus with the specified configuration file
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
 
-  # nginx:
-  #   image: nginx
-  #   container_name: nginx
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-  #   depends_on:
-  #     - backend
-  #     - frontend
+  nginx:
+    image: nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - backend
+      - frontend
