@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DeletedMessage, FileMessage, NormalMessgae } from "./messagesubcomponents";
+import { DeletedMessage, FileMessage, HiddenMessage, NormalMessgae } from "./messagesubcomponents";
 
 const MessageComponent = ({ onDelete, data }) => {  
   return (
@@ -9,6 +9,9 @@ const MessageComponent = ({ onDelete, data }) => {
       :
       data.msg_type === "delete_msg" ?
       <DeletedMessage data={data} onDelete={onDelete} key={data.msg_id} />
+      :
+      data.msg_type ==="hidden_msg"?
+      <HiddenMessage data={data} onDelete={onDelete}/>
       :
       <NormalMessgae data={data} onDelete={onDelete} key={data.msg_id} />
       }

@@ -37,19 +37,19 @@ services:
     #   - postgres_data:/var/lib/postgresql/data
     restart: always
   
-  # db_backup:
-  #   container_name: db_backup
-  #   # image: postgres:14-alpine
-  #   build: 
-  #     context: ./db_backup
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "5434:5432"
-  #   volumes:
-  #     - ./db_backup/postgresql.conf:/etc/postgresql.conf
-  #   expose:
-  #     - 5432
-  #   restart: always
+  db_backup:
+    container_name: db_backup
+    # image: postgres:14-alpine
+    build: 
+      context: ./db_backup
+      dockerfile: Dockerfile
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./db_backup/postgresql.conf:/etc/postgresql.conf
+    expose:
+      - 5432
+    restart: always
   
   backend:
     container_name: backend

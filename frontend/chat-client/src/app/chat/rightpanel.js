@@ -71,6 +71,29 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
     ]);
   };
 
+  const sendHiddenMsg = () => {
+    const msg_content_receiver_encrypted = crypt.encrypt(msg);
+    const msg_content_sender_encrypted = crypt2.encrypt(msg);
+    // generate a UUID for the message
+    const msg_id = uuidv4();
+    const message_payload = {
+      msg_type: "hidden_msg",
+      sender_id: userDetails.id,
+      receiver_id: selectedUser.id,
+      msg_content_sender_encrypted: msg_content_sender_encrypted,
+      msg_content_receiver_encrypted: msg_content_receiver_encrypted,
+      msg_id,
+    };
+    ws.send(JSON.stringify(message_payload));
+
+    setMsg("");
+    setUserMsgs([
+      ...userMsgs,
+      { sender: true, message: msg, ...message_payload },
+    ]);
+  };
+
+
   ws.onmessage = (event) => {
     console.log(event.data);
     const data = JSON.parse(event.data);
@@ -168,6 +191,13 @@ const RightPanel = ({ ws, selectedUser, userDetails }) => {
           />
         </svg>
         {openUploadModal && (<UploadModal isOpen={openUploadModal} onClose={onUpload} />)}
+
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg ml-4"
+          onClick={sendHiddenMsg}
+        >
+          Hidden msg
+        </button>
 
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded-lg ml-4"
