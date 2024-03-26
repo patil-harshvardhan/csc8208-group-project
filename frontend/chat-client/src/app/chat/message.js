@@ -1,32 +1,21 @@
-const MessageComponent = ({ message, sender }) => {
+import { useState } from "react";
+import { DeletedMessage, FileMessage, HiddenMessage, NormalMessgae } from "./messagesubcomponents";
+
+const MessageComponent = ({ onDelete, data }) => {  
   return (
-    <>
-      {sender === false ? (
-        <div className="chat-message my-2">
-          <div className="flex items-end">
-            <div className="flex flex-col mx-2 order-2 items-start">
-              <div>
-                <span className="px-4 py-2 rounded-lg inline-block rounded-bl-none bg-gray-300 text-gray-600">
-                  {message}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="chat-message my-2">
-          <div className="flex items-end justify-end">
-            <div className="flex flex-col mx-2 order-1 items-end">
-              <div>
-                <span className="px-4 py-2 rounded-lg inline-block rounded-br-none bg-blue-600 text-white ">
-                  {message}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    <div className="chat-message my-2">
+      {data.msg_type === "file" ?
+      <FileMessage data={data} onDelete={onDelete}  key={data.msg_id}/>
+      :
+      data.msg_type === "delete_msg" ?
+      <DeletedMessage data={data} onDelete={onDelete} key={data.msg_id} />
+      :
+      data.msg_type ==="hidden_msg"?
+      <HiddenMessage data={data} onDelete={onDelete}/>
+      :
+      <NormalMessgae data={data} onDelete={onDelete} key={data.msg_id} />
+      }
+    </div>
   );
 };
 
