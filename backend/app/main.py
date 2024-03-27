@@ -287,7 +287,7 @@ def login(request: schemas.requestdetails, request1: Request, db: Session = Depe
     ip  = request1.client.host
     dttect_bot = detect_botnets(user.id , ip ,db) 
     if(dttect_bot):
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="Botnet detected, please try again later")
 
     access=create_access_token(user.id)
     refresh = create_refresh_token(user.id)
@@ -478,6 +478,7 @@ def delete_chat_history(user2: str, dependencies=Depends(JWTBearer()), db: Sessi
 
 def detect_botnets(id: str , ip: str, db) -> bool:
     status = False
+    threshold = 5
     # look in db same user how many ips 
    # count = db.query(func.count(TokenTable.id)).filter(TokenTable.ip_address == user_data.ip_address).scalar()
     unique_ip_count = db.query(TokenTable.ip).filter(TokenTable.user_id == id).distinct().count()
@@ -485,7 +486,7 @@ def detect_botnets(id: str , ip: str, db) -> bool:
     # look for ip, how many user use this ip
     user_count = db.query(TokenTable.user_id).filter(TokenTable.ip == ip).distinct().count()
     print(f'user_count: {user_count}')
-    if (unique_ip_count >2) or (user_count > 2):
+    if (unique_ip_count >threshold) or (user_count > threshold):
         status =  True 
 
     return status
